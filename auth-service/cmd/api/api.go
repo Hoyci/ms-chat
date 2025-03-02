@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/hoyci/auth-service/service/healthcheck"
 	"github.com/hoyci/auth-service/types"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -24,7 +25,9 @@ func NewApiServer(addr string) *APIServer {
 	}
 }
 
-func (s *APIServer) SetupRouter() *mux.Router {
+func (s *APIServer) SetupRouter(
+	healthCheckHandler *healthcheck.HealthCheckHandler,
+) *mux.Router {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
@@ -38,6 +41,8 @@ func (s *APIServer) SetupRouter() *mux.Router {
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DomID("swagger-ui"),
 	)).Methods(http.MethodGet)
+
+	subrouter.HandleFunc("/healthcheck", healthCheckHandler.HandleHealthCheck).Methods(http.MethodGet)
 
 	s.Router = router
 

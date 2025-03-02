@@ -7,10 +7,11 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/hoyci/auth-service/cmd/api"
+	"github.com/hoyci/auth-service/service/healthcheck"
 	"github.com/hoyci/auth-service/types"
 )
 
-// @title Auth Service API
+// @title Auth Service API dwada
 // @version 1.0
 // @description API para gestão de usuário e autenticação
 // @host localhost:8080
@@ -29,7 +30,10 @@ func main() {
 	path := fmt.Sprintf("0.0.0.0:%d", cfg.Port)
 
 	apiServer := api.NewApiServer(path)
-	apiServer.SetupRouter()
+
+	healthCheckHandler := healthcheck.NewHealthCheckHandler(cfg)
+
+	apiServer.SetupRouter(healthCheckHandler)
 
 	log.Println("Listening on:", path)
 	http.ListenAndServe(path, apiServer.Router)

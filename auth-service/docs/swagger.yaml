@@ -3,7 +3,7 @@ host: localhost:8080
 info:
   contact: {}
   description: API para gestão de usuário e autenticação
-  title: Auth Service API
+  title: Auth Service API dwada
   version: "1.0"
 paths: {}
 securityDefinitions:

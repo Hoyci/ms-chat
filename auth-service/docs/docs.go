@@ -30,7 +30,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Auth Service API",
+	Title:            "Auth Service API dwada",
 	Description:      "API para gestão de usuário e autenticação",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
