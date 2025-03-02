@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "API para gestão de usuário e autenticação",
-        "title": "Auth Service API",
+        "title": "Auth Service API dwada",
         "contact": {},
         "version": "1.0"
     },
