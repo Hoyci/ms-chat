@@ -1,4 +1,4 @@
-module github.com/hoyci/auth-service
+module github.com/hoyci/ms-chat/auth-service
 
 go 1.23.1
 

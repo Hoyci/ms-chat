@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/hoyci/auth-service/service/healthcheck"
-	"github.com/hoyci/auth-service/types"
+	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
+	"github.com/hoyci/ms-chat/auth-service/types"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
