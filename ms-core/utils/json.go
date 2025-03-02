@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hoyci/ms-core/types"
+	"github.com/hoyci/ms-chat/ms-core/types"
 	"github.com/sirupsen/logrus"
 )
 

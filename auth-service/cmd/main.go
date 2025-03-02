@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/caarlos0/env"
-	"github.com/hoyci/auth-service/cmd/api"
-	"github.com/hoyci/auth-service/service/healthcheck"
-	"github.com/hoyci/auth-service/types"
+	"github.com/hoyci/ms-chat/auth-service/cmd/api"
+	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
+	"github.com/hoyci/ms-chat/auth-service/types"
 )
 
 // @title Auth Service API dwada

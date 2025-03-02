@@ -1,4 +1,4 @@
-module github.com/hoyci/ms-core
+module github.com/hoyci/ms-chat/ms-core
 
 go 1.23.1
 
