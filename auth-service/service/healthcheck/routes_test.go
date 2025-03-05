@@ -1,81 +1,81 @@
-// package healthcheck_test
+package healthcheck_test
 
-// import (
-// 	"io"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"testing"
+import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-// 	"github.com/hoyci/auth-service/cmd/api"
-// 	"github.com/hoyci/auth-service/service/healthcheck"
-// 	"github.com/hoyci/auth-service/types"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/hoyci/ms-chat/auth-service/cmd/api"
+	"github.com/hoyci/ms-chat/auth-service/config"
+	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
+	"github.com/stretchr/testify/assert"
+)
 
-// func TestHealthCheck(t *testing.T) {
-// 	t.Run("should return environment as production", func(t *testing.T) {
-// 		mockConfig := types.Config{
-// 			Environment: "production",
-// 		}
-// 		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
+func TestHealthCheck(t *testing.T) {
+	t.Run("should return environment as production", func(t *testing.T) {
+		mockConfig := config.Config{
+			Environment: "production",
+		}
+		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
 
-// 		apiServer := api.NewApiServer(":8080", nil)
-// 		router := apiServer.SetupRouter(healthCheckHandler, nil, nil, nil)
+		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		router := apiServer.SetupRouter(healthCheckHandler, nil, nil)
 
-// 		ts := httptest.NewServer(router)
-// 		defer ts.Close()
+		ts := httptest.NewServer(router)
+		defer ts.Close()
 
-// 		req := httptest.NewRequest(http.MethodGet, ts.URL+"/api/v1/healthcheck", nil)
-// 		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, ts.URL+"/api/v1/healthcheck", nil)
+		w := httptest.NewRecorder()
 
-// 		router.ServeHTTP(w, req)
+		router.ServeHTTP(w, req)
 
-// 		res := w.Result()
-// 		defer res.Body.Close()
+		res := w.Result()
+		defer res.Body.Close()
 
-// 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-// 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-// 		responseBody, err := io.ReadAll(res.Body)
-// 		if err != nil {
-// 			t.Fatalf("Failed to read response body: %v", err)
-// 		}
+		responseBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
 
-// 		expectedResponse := `{"status":"available","system_info":{"environment":"production"}}`
-// 		assert.JSONEq(t, expectedResponse, string(responseBody))
-// 	})
+		expectedResponse := `{"status":"available","system_info":{"environment":"production"}}`
+		assert.JSONEq(t, expectedResponse, string(responseBody))
+	})
 
-// 	t.Run("should return environment as production", func(t *testing.T) {
-// 		mockConfig := types.Config{
-// 			Environment: "production",
-// 		}
-// 		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
+	t.Run("should return environment as production", func(t *testing.T) {
+		mockConfig := config.Config{
+			Environment: "production",
+		}
+		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
 
-// 		apiServer := api.NewApiServer(":8080", nil)
-// 		router := apiServer.SetupRouter(healthCheckHandler, nil, nil, nil)
+		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		router := apiServer.SetupRouter(healthCheckHandler, nil, nil)
 
-// 		ts := httptest.NewServer(router)
-// 		defer ts.Close()
+		ts := httptest.NewServer(router)
+		defer ts.Close()
 
-// 		req := httptest.NewRequest(http.MethodGet, ts.URL+"/api/v1/healthcheck", nil)
-// 		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, ts.URL+"/api/v1/healthcheck", nil)
+		w := httptest.NewRecorder()
 
-// 		router.ServeHTTP(w, req)
+		router.ServeHTTP(w, req)
 
-// 		res := w.Result()
-// 		defer res.Body.Close()
+		res := w.Result()
+		defer res.Body.Close()
 
-// 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-// 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-// 		responseBody, err := io.ReadAll(res.Body)
-// 		if err != nil {
-// 			t.Fatalf("Failed to read response body: %v", err)
-// 		}
+		responseBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
 
-// 		expectedResponse := `{"status":"available","system_info":{"environment":"production"}}`
-// 		assert.JSONEq(t, expectedResponse, string(responseBody))
-// 	})
-// }
+		expectedResponse := `{"status":"available","system_info":{"environment":"production"}}`
+		assert.JSONEq(t, expectedResponse, string(responseBody))
+	})
+}

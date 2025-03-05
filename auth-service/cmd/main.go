@@ -5,10 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/caarlos0/env"
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
+	"github.com/hoyci/ms-chat/auth-service/config"
+	"github.com/hoyci/ms-chat/auth-service/db"
+	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
-	"github.com/hoyci/ms-chat/auth-service/types"
+	"github.com/hoyci/ms-chat/auth-service/service/user"
+	"github.com/hoyci/ms-chat/auth-service/utils"
 )
 
 // @title Auth Service API dwada
@@ -20,20 +23,21 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	var cfg types.Config
-	err := env.Parse(&cfg)
+	db := db.NewPGStorage()
+	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
+	apiServer := api.NewApiServer(path, db, config.Envs)
 
-	path := fmt.Sprintf("0.0.0.0:%d", cfg.Port)
+	healthCheckHandler := healthcheck.NewHealthCheckHandler(config.Envs)
 
-	apiServer := api.NewApiServer(path)
+	userStore := user.NewUserStore(db)
+	userHandler := user.NewUserHandler(userStore)
 
-	healthCheckHandler := healthcheck.NewHealthCheckHandler(cfg)
+	authStore := auth.NewAuthStore(db)
+	uuidGen := &utils.UUIDGeneratorUtil{}
+	authHandler := auth.NewAuthHandler(userStore, authStore, uuidGen)
 
-	apiServer.SetupRouter(healthCheckHandler)
+	apiServer.SetupRouter(healthCheckHandler, userHandler, authHandler)
 
 	log.Println("Listening on:", path)
 	http.ListenAndServe(path, apiServer.Router)
