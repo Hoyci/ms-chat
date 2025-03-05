@@ -1,111 +1,57 @@
-# Como criar um bate-papo em tempo real utilizando microsserviços
 
-Para criar um bate-papo em tempo real usando microsserviços, é necessário dividir as funcionalidades em serviços independentes, escaláveis e acoplados de forma flexível. Aqui está uma abordagem detalhada:
+# Real-Time Chat with Microservices 🚀
 
----
+A scalable real-time chat application built with microservices architecture. Supports instant messaging, presence status, and push notifications.
 
-## 1. Arquitetura Geral
+![Architecture Diagram](./architecture.png)
 
-Divida o sistema em microsserviços especializados, utilizando tecnologias adequadas para cada função:
 
-| **Microsserviço**        | **Responsabilidade**                          | **Tecnologias Sugeridas**                |
+## Tech Stack 🛠️
+
+| **Microservice**        | **Responsability**                          | **Technologies**                |
 | ------------------------ | --------------------------------------------- | ---------------------------------------- |
-| **WebSocket Service**    | Gerar conexões em tempo real (WebSocket)      | Node.js + Socket.io, WebSocket API (AWS) |
-| **Message Service**      | Armazenar/recuperar mensagens                 | MongoDB, PostgreSQL, Redis               |
-| **Presence Service**     | Gerenciar status de usuários (online/offline) | Redis, Cassandra                         |
-| **Auth Service**         | Autenticar usuários e validar tokens          | JWT, OAuth2, Keycloak                    |
-| **Notification Service** | Notificar eventos (ex: novas mensagens)       | RabbitMQ, Kafka, AWS SNS                 |
-| **API Gateway**          | Roteamento e gerenciamento de requisições     | NGINX, Kong, Spring Cloud Gateway        |
+| **WebSocket Service**    | To handle real-time connections (WebSocket)      | Golang + Websockets |
+| **Message Service**      | Store/retrieve messages                 | Golang + MongoDB
+| **Presence Service**     | Manage user status (online/offline) | Golanng + Redis                        |
+| **Auth Service**         | Authenticate users and validate tokens        | Golang + Postgres + JWT                    |
+| **Notification Service** | Notify events (e.g. new messages)       | RabbitMQ, Kafka, AWS SNS                 |
+| **API Gateway**          | Request routing and management     | NGINX        |
 
----
 
-## 2. Fluxo de Funcionamento
+## Operation Flow 🔧
+
 
 ### **a. Conexão Inicial do Usuário**
 
-1. **Autenticação**:
-   - O cliente envia credenciais para o **Auth Service** via HTTP (ex: login).
-   - O Auth Service retorna um **JWT** para acesso aos demais serviços.
-2. **Conexão WebSocket**:
-   - O cliente estabelece uma conexão WebSocket com o **WebSocket Service**, incluindo o JWT no handshake.
-   - O WebSocket Service valida o token com o **Auth Service**.
+1. **Authenntication**:
+   - Client sends credentials to **Auth Service** using HTTP
+   - The Auth Service returns a **JWT** for access to other services.
+2. **WebSocket connection**:
+   - The client establishes a WebSocket connection with the **WebSocket Service**, including the JWT in the handshake.
+   - WebSocket Service validates token with **Auth Service**.
 
-### **b. Envio de Mensagem**
+### **b.  Message Sending**
 
-1. O cliente envia uma mensagem via WebSocket.
-2. O **WebSocket Service** publica a mensagem em um **message broker** (ex: Kafka/RabbitMQ).
-3. O **Message Service** consome a mensagem do broker e a persiste no banco de dados.
-4. O **WebSocket Service** distribui a mensagem em tempo real para os destinatários via WebSocket.
+1. The client sends a message via WebSocket.
+2. The **WebSocket Service** publishes the message to a **message broker** (e.g. Kafka/RabbitMQ).
+3. The **Message Service** consumes the message from the broker and persists it to the database.
+4. The **Notification Service** consumes the message from the broker and notify user.
+5. The **WebSocket Service** distributes the message in real time to the recipients via WebSocket.
 
-### **c. Status de Presença**
+### **c. Presence Status**
 
-1. Quando um usuário se conecta, o **Presence Service** atualiza seu status para "online" (ex: usando Redis para armazenar estado).
-2. Ao desconectar, o WebSocket Service notifica o **Presence Service** para atualizar o status para "offline".
+1. When a user connects, the WebSocket Service notifies the **Presence Service** updates its status to "online" (e.g. using Redis to store state).
+2. When disconnecting, the WebSocket Service notifies the **Presence Service** to update the status to "offline".
 
-### **d. Notificações**
+### **d. Notifications**
 
-- O **Notification Service** escuta eventos do broker (ex: nova mensagem) e envia notificações push (ex: via Firebase Cloud Messaging).
+- The **Notification Service** listens to broker events (e.g. new message) and sends push notifications
 
----
+## 3. Communication Between Services
 
-## 3. Comunicação Entre Serviços
-
-- **Síncrona (HTTP/REST/gRPC)**:
-  - Validação de tokens, consulta de histórico de mensagens.
-- **Assíncrona (Message Broker)**:
-  - Eventos de mensagens, atualizações de status e notificações.
+- **Synchronous (HTTP/REST/gRPC)**:
+- Token validation, message history query.
+- **Asynchronous (Message Broker)**:
+- Message events, status updates and notifications.
 - **WebSocket**:
-  - Comunicação em tempo real entre cliente e servidor.
-
----
-
-## 4. Escalabilidade e Tolerância a Falhas
-
-- **WebSocket Service**:
-  - Use **Redis Pub/Sub** ou **ElastiCache** para sincronizar conexões WebSocket em múltiplas instâncias.
-- **Message Broker**:
-  - Utilize clusters do Kafka ou RabbitMQ para garantir entrega de mensagens.
-- **Banco de Dados**:
-  - Escalone horizontalmente (ex: MongoDB Sharding) ou use bancos otimizados para leitura/escrita (ex: Cassandra para presença).
-- **API Gateway**:
-  - Balanceamento de carga e rate limiting para evitar sobrecarga.
-
----
-
-## 5. Segurança
-
-- **WebSocket Secure (WSS)**:
-  - Criptografe a comunicação WebSocket com TLS.
-- **Validação de Tokens**:
-  - O **Auth Service** deve validar JWT em todas as requisições.
-- **Proteção de Dados**:
-  - Criptografe mensagens sensíveis (ex: end-to-end encryption).
-
----
-
-## 6. Monitoramento e Logs
-
-- **Ferramentas**:
-  - Prometheus + Grafana (métricas), ELK Stack (logs), Jaeger (tracing distribuído).
-- **Métricas Chave**:
-  - Latência de mensagens, conexões ativas, taxa de erros.
-
----
-
-## 7. Exemplo de Implementação
-
-```text
-Cliente (Web/Mobile)
-  │
-  ├── HTTP → API Gateway → Auth Service (valida JWT)
-  │
-  └── WebSocket → WebSocket Service (Node.js + Socket.io)
-        │
-        ├── Publica mensagem → Kafka → Message Service (persiste no MongoDB)
-        │
-        ├── Atualiza status → Redis (Presence Service)
-        │
-        └── Notificação → Firebase (Notification Service)
-```
-
-![image](./architecture.png)
+- Real-time communication between client and server.
