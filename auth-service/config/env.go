@@ -1,4 +1,10 @@
-package types
+package config
+
+import (
+	"log"
+
+	"github.com/caarlos0/env"
+)
 
 type Config struct {
 	Port                          int    `env:"PORT" envDefault:"8080"`
@@ -8,4 +14,17 @@ type Config struct {
 	AccessJWTExpirationInSeconds  int    `env:"ACCESS_JWT_EXPIRATION" envDefault:"604800"`
 	RefreshJWTSecret              string `env:"REFRESH_JWT_SECRET" envDefault:"UM_REFRESH_TOKEN_MTO_DIFICIL"`
 	RefreshJWTExpirationInSeconds int    `env:"REFRESH_JWT_EXPIRATION" envDefault:"9072000"`
+}
+
+var Envs = initConfig()
+
+func initConfig() Config {
+	var cfg Config
+	err := env.Parse(&cfg)
+
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	return cfg
 }
