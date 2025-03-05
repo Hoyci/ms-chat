@@ -21,7 +21,7 @@ A scalable real-time chat application built with microservices architecture. Sup
 ## Operation Flow 🔧
 
 
-### **a. Conexão Inicial do Usuário**
+### **a. Initial User Connection**
 
 1. **Authenntication**:
    - Client sends credentials to **Auth Service** using HTTP
