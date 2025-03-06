@@ -14,7 +14,7 @@ A scalable real-time chat application built with microservices architecture. Sup
 | **Message Service**      | Store/retrieve messages                 | Golang + MongoDB
 | **Presence Service**     | Manage user status (online/offline) | Golanng + Redis                        |
 | **Auth Service**         | Authenticate users and validate tokens        | Golang + Postgres + JWT                    |
-| **Notification Service** | Notify events (e.g. new messages)       | RabbitMQ, Kafka, AWS SNS                 |
+| **Notification Service** | Notify events (e.g. new messages)       | RabbitMQ                 |
 | **API Gateway**          | Request routing and management     | NGINX        |
 
 
