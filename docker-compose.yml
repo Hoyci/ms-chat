@@ -1,6 +1,6 @@
 services:
   postgres:
-    container_name: auth-db
+    container_name: postgres
     image: bitnami/postgresql:latest
     environment:
       POSTGRES_USER: user
@@ -11,7 +11,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - internal
 
   rabbitmq:
     image: rabbitmq:management
@@ -26,15 +26,61 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "rabbitmqctl await_startup -t 30"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    networks:
+      - internal
+
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - internal
+    depends_on:
+      - auth-service
+      - ws-service
+
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    command: sh -c "while ! nc -z postgres 5432; do sleep 2; done && ./migrate up && ./main"
+    ports:
+      - "8080"
+    environment:
+      - ROOT_PATH=/app
+    depends_on:
+      postgres:
+        condition: service_started
+    networks:
+      - internal
+
+  ws-service:
+    container_name: ws-service
+    build:
+      context: ./ws-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081"
+    environment:
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - internal
 
 volumes:
   db-data:
   rabbitmq_data:
 
 networks:
-  app-network:
+  internal:
     driver: bridge
