@@ -1,25 +1,21 @@
-
 # Real-Time Chat with Microservices 🚀
 
 A scalable real-time chat application built with microservices architecture. Supports instant messaging, presence status, and push notifications.
 
 ![Architecture Diagram](./architecture.png)
 
-
 ## Tech Stack 🛠️
 
-| **Microservice**        | **Responsability**                          | **Technologies**                |
-| ------------------------ | --------------------------------------------- | ---------------------------------------- |
-| **WebSocket Service**    | To handle real-time connections (WebSocket)      | Golang + Websockets |
-| **Message Service**      | Store/retrieve messages                 | Golang + MongoDB
-| **Presence Service**     | Manage user status (online/offline) | Golanng + Redis                        |
-| **Auth Service**         | Authenticate users and validate tokens        | Golang + Postgres + JWT                    |
-| **Notification Service** | Notify events (e.g. new messages)       | RabbitMQ                 |
-| **API Gateway**          | Request routing and management     | NGINX        |
-
+| **Microservice**         | **Responsability**                          | **Technologies**        |
+| ------------------------ | ------------------------------------------- | ----------------------- |
+| **WebSocket Service**    | To handle real-time connections (WebSocket) | Golang + Websockets     |
+| **Message Service**      | Store/retrieve messages                     | Golang + MongoDB        |
+| **Presence Service**     | Manage user status (online/offline)         | Golanng + Redis         |
+| **Auth Service**         | Authenticate users and validate tokens      | Golang + Postgres + JWT |
+| **Notification Service** | Notify events (e.g. new messages)           | RabbitMQ                |
+| **API Gateway**          | Request routing and management              | NGINX                   |
 
 ## Operation Flow 🔧
-
 
 ### **a. Initial User Connection**
 
@@ -27,16 +23,16 @@ A scalable real-time chat application built with microservices architecture. Sup
    - Client sends credentials to **Auth Service** using HTTP
    - The Auth Service returns a **JWT** for access to other services.
 2. **WebSocket connection**:
-   - The client establishes a WebSocket connection with the **WebSocket Service**, including the JWT in the handshake.
-   - WebSocket Service validates token with **Auth Service**.
+   - API Gateway service validates token using **Public key (RSA)**
+   - The client establishes a WebSocket connection with the **WebSocket Service**, including user information in the headers.
 
-### **b.  Message Sending**
+### **b. Message Sending**
 
 1. The client sends a message via WebSocket.
-2. The **WebSocket Service** publishes the message to a **message broker** (e.g. Kafka/RabbitMQ).
-3. The **Message Service** consumes the message from the broker and persists it to the database.
-4. The **Notification Service** consumes the message from the broker and notify user.
-5. The **WebSocket Service** distributes the message in real time to the recipients via WebSocket.
+2. The **WebSocket Service** publishes the message to a **message broker**.
+3. The **WebSocket Service** consumes the message from the broker and send it to the users.
+4. The **Message Service** consumes the message from the broker and persists it to the database.
+5. The **Notification Service** consumes the message from the broker and notify users.
 
 ### **c. Presence Status**
 
@@ -50,7 +46,7 @@ A scalable real-time chat application built with microservices architecture. Sup
 ## 3. Communication Between Services
 
 - **Synchronous (HTTP/REST/gRPC)**:
-- Token validation, message history query.
+- Refresh token validation, message history query.
 - **Asynchronous (Message Broker)**:
 - Message events, status updates and notifications.
 - **WebSocket**:
