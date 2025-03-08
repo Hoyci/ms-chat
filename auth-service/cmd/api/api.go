@@ -60,6 +60,7 @@ func (s *APIServer) SetupRouter(
 	subrouter.HandleFunc("/auth", authHandler.HandleUserLogin).Methods(http.MethodPost)
 	subrouter.HandleFunc("/auth/refresh", authHandler.HandleRefreshToken).Methods(http.MethodPost)
 
+	// Think about remove these authMiddlewares because the API Gateway is already authenticating the requests
 	subrouter.HandleFunc("/users", userHandler.HandleCreateUser).Methods(http.MethodPost)
 	subrouter.Handle("/users", utils.AuthMiddleware(http.HandlerFunc(userHandler.HandleGetUserByID))).Methods(http.MethodGet)
 	subrouter.Handle("/users", utils.AuthMiddleware(http.HandlerFunc(userHandler.HandleUpdateUserByID))).Methods(http.MethodPut)
