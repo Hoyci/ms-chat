@@ -2,8 +2,6 @@
 
 A scalable real-time chat application built with microservices architecture. Supports instant messaging, presence status, and push notifications.
 
-![Architecture Diagram](./architecture.png)
-
 ## Tech Stack 🛠️
 
 | **Microservice**         | **Responsability**                          | **Technologies**        |
