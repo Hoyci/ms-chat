@@ -81,25 +81,23 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "The email or password is incorrect"})
 	}
 
-	accessToken, err := utils.CreateJWT(user.ID, user.Username, user.Email, config.Envs.AccessJWTSecret, int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen)
+	accessToken, err := utils.CreateJWT(user.ID, user.Username, user.Email, config.Envs.AccessJWTSecret, int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, utils.PrivateKeyAccess)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"})
 	}
 
-	accessTokenClaims, err := utils.VerifyJWT(accessToken, config.Envs.AccessJWTSecret)
+	_, err = utils.VerifyJWT(accessToken, &utils.PrivateKeyAccess.PublicKey)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"})
 		return
 	}
 
-	fmt.Println(accessTokenClaims)
-
-	refreshToken, err := utils.CreateJWT(user.ID, user.Username, user.Email, config.Envs.RefreshJWTSecret, int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen)
+	refreshToken, err := utils.CreateJWT(user.ID, user.Username, user.Email, config.Envs.RefreshJWTSecret, int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, utils.PrivateKeyRefresh)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"})
 	}
 
-	refreshTokenClaims, err := utils.VerifyJWT(refreshToken, config.Envs.RefreshJWTSecret)
+	refreshTokenClaims, err := utils.VerifyJWT(refreshToken, &utils.PrivateKeyRefresh.PublicKey)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"})
 		return
@@ -155,7 +153,7 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	claims, err := utils.VerifyJWT(requestPayload.RefreshToken, config.Envs.RefreshJWTSecret)
+	claims, err := utils.VerifyJWT(requestPayload.RefreshToken, &utils.PrivateKeyRefresh.PublicKey)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusUnauthorized, err, "HandleRefreshToken", coreTypes.UnauthorizedResponse{Error: "Refresh token is invalid or has been expired"})
 		return
@@ -180,17 +178,17 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	newAccessToken, err := utils.CreateJWT(claims.UserID, claims.Username, claims.Email, config.Envs.AccessJWTSecret, int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen)
+	newAccessToken, err := utils.CreateJWT(claims.UserID, claims.Username, claims.Email, config.Envs.AccessJWTSecret, int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, utils.PrivateKeyAccess)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "Refresh token is invalid or has been expired"})
 	}
 
-	newRefreshToken, err := utils.CreateJWT(claims.UserID, claims.Username, claims.Email, config.Envs.RefreshJWTSecret, int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen)
+	newRefreshToken, err := utils.CreateJWT(claims.UserID, claims.Username, claims.Email, config.Envs.RefreshJWTSecret, int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, utils.PrivateKeyRefresh)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "Refresh token is invalid or has been expired"})
 	}
 
-	newRefreshTokenClaims, err := utils.VerifyJWT(newRefreshToken, config.Envs.RefreshJWTSecret)
+	newRefreshTokenClaims, err := utils.VerifyJWT(newRefreshToken, &utils.PrivateKeyRefresh.PublicKey)
 	if err != nil {
 		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "Refresh token is invalid or has been expired"})
 		return

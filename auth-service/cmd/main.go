@@ -26,7 +26,7 @@ func main() {
 	db := db.NewPGStorage()
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
-	apiServer := api.NewApiServer(path, db, config.Envs)
+	apiServer := api.NewApiServer(path, db)
 
 	healthCheckHandler := healthcheck.NewHealthCheckHandler(config.Envs)
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
-	"github.com/hoyci/ms-chat/auth-service/config"
 	"github.com/hoyci/ms-chat/auth-service/mocks"
 	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/types"
@@ -24,19 +23,19 @@ import (
 )
 
 func TestHandleUserLogin(t *testing.T) {
-	setupTestServer := func() (*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router, config.Config) {
+	setupTestServer := func() (*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router) {
 		mockUUID := new(mocks.MockUUIDGenerator)
 		mockAuthStore := new(mocks.MockAuthStore)
 		mockUserStore := new(mocks.MockUserStore)
 		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{AccessJWTSecret: "UM_ACCESS_TOKEN_MTO_DIFICIL", RefreshJWTSecret: "UM_REFRESH_TOKEN_MTO_DIFICIL"})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, nil, mockAuthHandler)
 		ts := httptest.NewServer(router)
-		return mockUserStore, mockAuthStore, mockUUID, ts, router, apiServer.Config
+		return mockUserStore, mockAuthStore, mockUUID, ts, router
 	}
 
 	t.Run("it should throw an error when body is not a valid JSON", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		invalidBody := bytes.NewReader([]byte("INVALID JSON"))
@@ -61,7 +60,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when body is a valid JSON but missing key", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		payload := types.UserLoginPayload{}
@@ -87,7 +86,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when body does not contain a valid email", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		payload := types.UserLoginPayload{
@@ -116,7 +115,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when password or confirmPassword is smaller than 8 chars", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		payload := types.UserLoginPayload{
@@ -145,7 +144,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when call endpoint with a non-existent user ID", func(t *testing.T) {
-		mockUserStore, _, _, ts, router, _ := setupTestServer()
+		mockUserStore, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return((*types.GetByEmailResponse)(nil), sql.ErrNoRows)
@@ -172,7 +171,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should return error when the request context is canceled during the process of get user by email", func(t *testing.T) {
-		mockUserStore, _, _, ts, router, _ := setupTestServer()
+		mockUserStore, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		canceledCtx, cancel := context.WithCancel(context.Background())
@@ -206,7 +205,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should throw a database find error", func(t *testing.T) {
-		mockUserStore, _, _, ts, router, _ := setupTestServer()
+		mockUserStore, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return((*types.GetByEmailResponse)(nil), fmt.Errorf("no row found with email: 'johndoe@email.com'"))
@@ -233,7 +232,7 @@ func TestHandleUserLogin(t *testing.T) {
 	})
 
 	t.Run("it should successfully authenticate a user", func(t *testing.T) {
-		mockUserStore, mockAuthStore, mockUUID, ts, router, config := setupTestServer()
+		mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
 		defer ts.Close()
 
 		mockUUID.On("New").Return("mocked-uuid")
@@ -292,14 +291,14 @@ func TestHandleUserLogin(t *testing.T) {
 			t.Fatalf("refresh_token not found or not a string")
 		}
 
-		accessTokenClaims, err := utils.VerifyJWT(accessToken, config.AccessJWTSecret)
+		accessTokenClaims, err := utils.VerifyJWT(accessToken, &utils.PrivateKeyAccess.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 
 		assert.Equal(t, "johndoe@email.com", accessTokenClaims.Email, "Email claim mismatch")
 		assert.Equal(t, "JohnDoe", accessTokenClaims.Username, "Username claim mismatch")
 		assert.Equal(t, 1, accessTokenClaims.UserID, "UserID claim mismatch")
 
-		refresh_token_claims, err := utils.VerifyJWT(refresh_token, config.RefreshJWTSecret)
+		refresh_token_claims, err := utils.VerifyJWT(refresh_token, &utils.PrivateKeyRefresh.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 
 		assert.Equal(t, 1, refresh_token_claims.UserID, "UserID claim mismatch")
@@ -307,19 +306,19 @@ func TestHandleUserLogin(t *testing.T) {
 }
 
 func TestHandleRefreshToken(t *testing.T) {
-	setupTestServer := func() (*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router, config.Config) {
+	setupTestServer := func() (*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router) {
 		mockUUID := new(mocks.MockUUIDGenerator)
 		mockAuthStore := new(mocks.MockAuthStore)
 		mockUserStore := new(mocks.MockUserStore)
 		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{AccessJWTSecret: "UM_ACCESS_TOKEN_MTO_DIFICIL", RefreshJWTSecret: "UM_REFRESH_TOKEN_MTO_DIFICIL"})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, nil, mockAuthHandler)
 		ts := httptest.NewServer(router)
-		return mockUserStore, mockAuthStore, mockUUID, ts, router, apiServer.Config
+		return mockUserStore, mockAuthStore, mockUUID, ts, router
 	}
 
 	t.Run("it should throw an error when body is not a valid JSON", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		invalidBody := bytes.NewReader([]byte("INVALID JSON"))
@@ -344,7 +343,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when body is a valid JSON but missing key", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		payload := types.UserLoginPayload{}
@@ -370,7 +369,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	})
 
 	t.Run("it should throw an error when body does not contain a valid token", func(t *testing.T) {
-		_, _, _, ts, router, _ := setupTestServer()
+		_, _, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		payload := types.RefreshTokenPayload{
@@ -398,8 +397,8 @@ func TestHandleRefreshToken(t *testing.T) {
 	})
 
 	t.Run("it should return error when the request context is canceled during the process of get refresh token by user id", func(t *testing.T) {
-		token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", config.Envs.RefreshJWTSecret)
-		_, mockAuthStore, _, ts, router, _ := setupTestServer()
+		token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", utils.PrivateKeyRefresh)
+		_, mockAuthStore, _, ts, router := setupTestServer()
 		defer ts.Close()
 
 		canceledCtx, cancel := context.WithCancel(context.Background())
@@ -432,7 +431,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	})
 
 	t.Run("it should successfully refresh user token", func(t *testing.T) {
-		mockUserStore, mockAuthStore, mockUUID, ts, router, config := setupTestServer()
+		mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
 		defer ts.Close()
 
 		mockUUID.On("New").Return("mocked-uuid")
@@ -531,20 +530,20 @@ func TestHandleRefreshToken(t *testing.T) {
 			t.Fatalf("refresh_token not found or not a string")
 		}
 
-		access_token_claims, err := utils.VerifyJWT(access_token, config.AccessJWTSecret)
+		access_token_claims, err := utils.VerifyJWT(access_token, &utils.PrivateKeyAccess.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 
 		assert.Equal(t, "johndoe@email.com", access_token_claims.Email, "Email claim mismatch")
 		assert.Equal(t, "JohnDoe", access_token_claims.Username, "Username claim mismatch")
 		assert.Equal(t, 1, access_token_claims.UserID, "UserID claim mismatch")
 
-		refresh_token_claims, err := utils.VerifyJWT(refresh_token, config.RefreshJWTSecret)
+		refresh_token_claims, err := utils.VerifyJWT(refresh_token, &utils.PrivateKeyRefresh.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 		assert.Equal(t, 1, refresh_token_claims.UserID, "UserID claim mismatch")
 	})
 
 	t.Run("it should not be able refresh user with expired token", func(t *testing.T) {
-		mockUserStore, mockAuthStore, mockUUID, ts, router, _ := setupTestServer()
+		mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
 		defer ts.Close()
 
 		mockUUID.On("New").Return("mocked-uuid")
