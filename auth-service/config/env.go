@@ -14,6 +14,7 @@ type Config struct {
 	AccessJWTExpirationInSeconds  int    `env:"ACCESS_JWT_EXPIRATION" envDefault:"604800"`
 	RefreshJWTSecret              string `env:"REFRESH_JWT_SECRET" envDefault:"UM_REFRESH_TOKEN_MTO_DIFICIL"`
 	RefreshJWTExpirationInSeconds int    `env:"REFRESH_JWT_EXPIRATION" envDefault:"9072000"`
+	RootPath                      string `env:"ROOT_PATH" envDefault:"C:\\Users\\Administrador\\golang\\ms-chat\\auth-service"`
 }
 
 var Envs = initConfig()

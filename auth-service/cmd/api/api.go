@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -21,12 +22,12 @@ type APIServer struct {
 	Config config.Config
 }
 
-func NewApiServer(addr string, db *sql.DB, configEnvs config.Config) *APIServer {
+func NewApiServer(addr string, db *sql.DB) *APIServer {
 	return &APIServer{
 		addr:   addr,
 		db:     db,
 		Router: nil,
-		Config: configEnvs,
+		Config: config.Envs,
 	}
 }
 
@@ -35,6 +36,10 @@ func (s *APIServer) SetupRouter(
 	userHandler *user.UserHandler,
 	authHandler *auth.AuthHandler,
 ) *mux.Router {
+	if err := utils.InitJWT(); err != nil {
+		log.Fatal("Failed to init JWT:", err)
+	}
+
 	coreUtils.InitLogger()
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()

@@ -26,7 +26,7 @@ func TestHandleCreateUser(t *testing.T) {
 	setupTestServer := func() (*mocks.MockUserStore, *httptest.Server, *mux.Router, config.Config) {
 		mockUserStore := new(mocks.MockUserStore)
 		mockUserHandler := user.NewUserHandler(mockUserStore)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, mockUserHandler, nil)
 		ts := httptest.NewServer(router)
 		return mockUserStore, ts, router, apiServer.Config
@@ -274,13 +274,13 @@ func TestHandleGetUser(t *testing.T) {
 	setupTestServer := func() (*mocks.MockUserStore, *httptest.Server, *mux.Router, config.Config) {
 		mockUserStore := new(mocks.MockUserStore)
 		mockUserHandler := user.NewUserHandler(mockUserStore)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, mockUserHandler, nil)
 		ts := httptest.NewServer(router)
 		return mockUserStore, ts, router, apiServer.Config
 	}
 
-	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", config.Envs.AccessJWTSecret)
+	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", utils.PrivateKeyAccess)
 
 	t.Run("it should return error when context is canceled", func(t *testing.T) {
 		mockUserStore, ts, router, _ := setupTestServer()
@@ -408,13 +408,13 @@ func TestHandleUpdateUser(t *testing.T) {
 	setupTestServer := func() (*mocks.MockUserStore, *httptest.Server, *mux.Router, config.Config) {
 		mockUserStore := new(mocks.MockUserStore)
 		mockUserHandler := user.NewUserHandler(mockUserStore)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, mockUserHandler, nil)
 		ts := httptest.NewServer(router)
 		return mockUserStore, ts, router, apiServer.Config
 	}
 
-	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", config.Envs.AccessJWTSecret)
+	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", utils.PrivateKeyAccess)
 
 	t.Run("it should throw an error when no fields are provided for update", func(t *testing.T) {
 		_, ts, router, _ := setupTestServer()
@@ -608,13 +608,13 @@ func TestHandleDeleteUser(t *testing.T) {
 	setupTestServer := func() (*mocks.MockUserStore, *httptest.Server, *mux.Router, config.Config) {
 		mockUserStore := new(mocks.MockUserStore)
 		mockUserHandler := user.NewUserHandler(mockUserStore)
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, mockUserHandler, nil)
 		ts := httptest.NewServer(router)
 		return mockUserStore, ts, router, apiServer.Config
 	}
 
-	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", config.Envs.AccessJWTSecret)
+	token := utils.GenerateTestToken(1, "JohnDoe", "johndoe@example.com", utils.PrivateKeyAccess)
 
 	t.Run("it should return error when the request context is canceled", func(t *testing.T) {
 		mockUserStore, ts, router, _ := setupTestServer()

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hoyci/ms-chat/auth-service/config"
 	coreTypes "github.com/hoyci/ms-chat/core/types"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 )
@@ -38,7 +37,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		token := parts[1]
 
-		claims, err := VerifyJWT(token, config.Envs.AccessJWTSecret)
+		claims, err := VerifyJWT(token, &PrivateKeyAccess.PublicKey)
 		if err != nil {
 			coreUtils.WriteError(
 				w,

@@ -19,7 +19,7 @@ func TestHealthCheck(t *testing.T) {
 		}
 		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
 
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(healthCheckHandler, nil, nil)
 
 		ts := httptest.NewServer(router)
@@ -52,7 +52,7 @@ func TestHealthCheck(t *testing.T) {
 		}
 		healthCheckHandler := healthcheck.NewHealthCheckHandler(mockConfig)
 
-		apiServer := api.NewApiServer(":8080", nil, config.Config{})
+		apiServer := api.NewApiServer(":8080", nil)
 		router := apiServer.SetupRouter(healthCheckHandler, nil, nil)
 
 		ts := httptest.NewServer(router)
