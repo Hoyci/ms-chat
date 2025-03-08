@@ -74,7 +74,7 @@ func CreateJWT(userID int, username string, email string, secretKey string, expT
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expTimeInSeconds) * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "book-store-api",
+			Issuer:    "ms-chat-auth",
 			ID:        jti,
 		},
 	}
