@@ -3,9 +3,9 @@ package healthcheck
 import (
 	"net/http"
 
-	"github.com/hoyci/ms-chat/auth-service/config"
-	"github.com/hoyci/ms-chat/auth-service/types"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
+	"github.com/hoyci/ms-chat/message-service/config"
+	"github.com/hoyci/ms-chat/message-service/types"
 )
 
 type HealthCheckHandler struct {

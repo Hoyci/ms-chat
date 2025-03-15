@@ -47,7 +47,7 @@ func Init() {
 }
 
 func createQueue(name string, headers amqp.Table) {
-	q, _ := channel.QueueDeclare(
+	q, err := channel.QueueDeclare(
 		name,
 		true,
 		false,
@@ -55,6 +55,10 @@ func createQueue(name string, headers amqp.Table) {
 		false,
 		nil,
 	)
+
+	if err != nil {
+		log.Printf("Failed to declare queue %s", name)
+	}
 
 	channel.QueueBind(
 		q.Name,

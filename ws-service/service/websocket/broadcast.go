@@ -21,27 +21,37 @@ func StartBroadcastConsumer() {
 		nil,
 	)
 
-	log.Println("[CONSUMER] Iniciando consumer do broadcast...")
 	for msg := range msgs {
-		log.Printf("[BROADCAST] Mensagem recebida: %s", string(msg.Body))
 		var message types.Message
-		json.Unmarshal(msg.Body, &message)
 
-		connections := GetRoomConnections(message.Room)
-		for _, conn := range connections {
-			log.Printf("Verificando conexão %s para sala %s", conn.ClientID, message.Room)
-			if _, ok := conn.Rooms[message.Room]; ok {
-				log.Printf("Conexão %s está na sala", conn.ClientID)
-				if conn.ClientID != message.ClientID {
-					log.Printf("Enviando para %s", conn.ClientID)
-					err := conn.Channel.WriteJSON(message)
-					if err != nil {
-						log.Printf("Erro ao enviar para %s: %v", conn.ClientID, err)
-					}
-				}
+		if err := json.Unmarshal(msg.Body, &message); err != nil {
+			log.Println("Error unmarshaling message", err)
+			msg.Nack(false, true)
+			continue
+		}
+
+		userDevices := GetUserDevicesConnections(message.UserID)
+		deliveryFailed := false
+
+		for _, conn := range userDevices {
+			// if ok := conn.UserID == message.UserID; !ok {
+			// 	continue
+			// }
+
+			// if conn.ClientID == message.ClientID {
+			// 	continue
+			// }
+
+			if err := conn.Channel.WriteJSON(message); err != nil {
+				log.Printf("An error occurred while sending the message to %s: %v", conn.ClientID, err)
+				deliveryFailed = true
 			}
 		}
 
-		msg.Ack(false)
+		if deliveryFailed {
+			msg.Nack(false, true)
+		} else {
+			msg.Ack(false)
+		}
 	}
 }
