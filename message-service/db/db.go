@@ -49,7 +49,7 @@ func Add[T any](repo *MongoRepository, ctx context.Context, collectionName strin
 	return oid, nil
 }
 
-func List[T any](repo *MongoRepository, ctx context.Context, collectionName string, filter T) ([]T, error) {
+func List[T any](repo *MongoRepository, ctx context.Context, collectionName string, filter bson.M) ([]T, error) {
 	collection := repo.client.Database(repo.config.DatabaseName).Collection(collectionName)
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
@@ -71,19 +71,43 @@ func List[T any](repo *MongoRepository, ctx context.Context, collectionName stri
 	return results, nil
 }
 
-func GetByID[T any](repo *MongoRepository, ctx context.Context, collectionName string, id string) (*T, error) {
+func GetByFilter[T any](repo *MongoRepository, ctx context.Context, collectionName string, filter bson.M) (*T, error) {
 	collection := repo.client.Database(repo.config.DatabaseName).Collection(collectionName)
 
-	objectID, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"_id": objectID}
 	var result T
 	if err := collection.FindOne(ctx, filter).Decode(&result); err != nil {
 		return nil, err
 	}
 
 	return &result, nil
+}
+
+func GetOrCreate[T any](repo *MongoRepository, ctx context.Context, collectionName string, id string, document T) (*T, error) {
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objectID}
+
+	existing, err := GetByFilter[T](repo, ctx, collectionName, filter)
+	if err == nil {
+		return existing, nil
+	}
+	if err != mongo.ErrNoDocuments && err != bson.ErrInvalidHex {
+		return nil, err
+	}
+
+	_, err = Add(repo, ctx, collectionName, document)
+	if err == nil {
+		return &document, nil
+	}
+	if mongo.IsDuplicateKeyError(err) {
+		existing, err := GetByFilter[T](repo, ctx, collectionName, filter)
+		if err == nil {
+			return existing, nil
+		}
+		return nil, err
+	}
+	return nil, err
 }

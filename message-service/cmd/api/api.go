@@ -7,7 +7,6 @@ import (
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"github.com/hoyci/ms-chat/message-service/config"
 	"github.com/hoyci/ms-chat/message-service/service/healthcheck"
-	"github.com/hoyci/ms-chat/message-service/service/room"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -27,7 +26,7 @@ func NewApiServer(addr string) *APIServer {
 
 func (s *APIServer) SetupRouter(
 	healthCheckHandler *healthcheck.HealthCheckHandler,
-	roomHandler *room.RoomHandler,
+	// roomHandler *room.RoomHandler,
 ) *mux.Router {
 	coreUtils.InitLogger()
 	router := mux.NewRouter()
@@ -46,8 +45,8 @@ func (s *APIServer) SetupRouter(
 
 	subrouter.HandleFunc("/healthcheck", healthCheckHandler.HandleHealthCheck).Methods(http.MethodGet)
 
-	subrouter.HandleFunc("/rooms", roomHandler.HandleCreateRoom).Methods(http.MethodPost)
-	subrouter.HandleFunc("/rooms", roomHandler.HandleGetRoomByID).Methods(http.MethodGet)
+	// subrouter.HandleFunc("/rooms", roomHandler.HandleCreateRoom).Methods(http.MethodPost)
+	// subrouter.HandleFunc("/rooms", roomHandler.HandleGetRoomByID).Methods(http.MethodGet)
 
 	s.Router = router
 

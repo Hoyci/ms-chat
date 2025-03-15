@@ -9,6 +9,7 @@ import (
 	"github.com/hoyci/ms-chat/message-service/config"
 	"github.com/hoyci/ms-chat/message-service/db"
 	"github.com/hoyci/ms-chat/message-service/service/healthcheck"
+	"github.com/hoyci/ms-chat/message-service/service/rabbitmq"
 	"github.com/hoyci/ms-chat/message-service/service/room"
 )
 
@@ -22,20 +23,27 @@ import (
 // @name Authorization
 func main() {
 	dbRepo := db.NewMongoRepository(config.Envs)
-	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
+	rabbitmq.Init(dbRepo)
+	defer rabbitmq.GetChannel().Close()
+	go rabbitmq.ConsumeQueue(
+		rabbitmq.GetChannel(),
+		config.Envs.PersistenceQueueName,
+		rabbitmq.ProcessChatMessage,
+	)
+
+	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 	apiServer := api.NewApiServer(path)
 
 	healthCheckHandler := healthcheck.NewHealthCheckHandler(config.Envs)
 
-	roomStore := room.NewRoomStore(dbRepo)
-	roomHandler := room.NewRoomHandler(roomStore)
+	roomStore := room.GetRoomStore(dbRepo)
+	room.NewRoomHandler(roomStore)
 
 	apiServer.SetupRouter(
 		healthCheckHandler,
-		roomHandler,
+		// roomHandler,
 	)
-
 	log.Println("Listening on:", path)
 	http.ListenAndServe(path, apiServer.Router)
 }
