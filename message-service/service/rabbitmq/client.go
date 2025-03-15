@@ -87,7 +87,7 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 	log.Println(string(b))
 
 	// Persistir mensagem no banco de dados com status pending
-	log.Printf("Persistindo mensagem: %+v", wsMessage)
+	log.Printf("Persistindo mensagem2: %+v", wsMessage)
 	messageID, err := messageStore.Create(
 		context.Background(),
 		types.Message{

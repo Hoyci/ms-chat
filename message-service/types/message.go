@@ -19,7 +19,7 @@ type Message struct {
 	SenderID   int           `json:"sender_id" bson:"sender_id" validate:"required"`
 	ReceiverID int           `json:"receiver_id" bson:"receiver_id" validate:"required"`
 	Content    string        `json:"content" bson:"content" validate:"required"`
-	Status     Status        `json:"status" bson:"status" validate:"required"`
+	Status     Status        `json:"status" bson:"status"  validate:"required"`
 	CreatedAt  time.Time     `json:"created_at" bson:"created_at"`
 	UpdatedAt  *time.Time    `json:"updated_at" bson:"updated_at"`
 	DeletedAt  *time.Time    `json:"deleted_at" bson:"deleted_at"`
