@@ -70,6 +70,12 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 	var wsMessage coreTypes.Message
 	json.Unmarshal(msgBody, &wsMessage)
 
+	b, err := json.Marshal(wsMessage)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(string(b))
+
 	// Pegar ou cria o canal da mensagem
 	roomStore := room.GetRoomStore(dbRepo)
 	messageStore := message.GetMessageStore(dbRepo)
@@ -79,12 +85,6 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 		log.Printf("Error with GetOrCreateRoom: %v", err)
 		return err
 	}
-
-	b, err := json.Marshal(room)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println(string(b))
 
 	// Persistir mensagem no banco de dados com status pending
 	log.Printf("Persistindo mensagem2: %+v", wsMessage)

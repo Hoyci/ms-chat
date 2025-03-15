@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	coreTypes "github.com/hoyci/ms-chat/core/types"
 	"github.com/hoyci/ms-chat/ws-service/service/rabbitmq"
 	"github.com/hoyci/ms-chat/ws-service/service/redis"
 	"github.com/hoyci/ms-chat/ws-service/types"
@@ -81,7 +82,7 @@ func manageConnection(conn *websocket.Conn, clientID string, userID int) {
 	}()
 
 	for {
-		var msg types.Message
+		var msg coreTypes.Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
