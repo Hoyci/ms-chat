@@ -39,11 +39,6 @@ func Init() {
 		"x-match":     "any",
 		"persistence": "true",
 	})
-
-	createQueue("broadcast_queue", amqp.Table{
-		"x-match":   "any",
-		"broadcast": "true",
-	})
 }
 
 func createQueue(name string, headers amqp.Table) {

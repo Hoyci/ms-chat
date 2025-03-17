@@ -74,25 +74,44 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 				return
 			}
 
-			if err := utils.Validate.Struct(msg); err != nil {
-				var errorMessages []string
-				for _, e := range err.(validator.ValidationErrors) {
-					errorMessages = append(errorMessages, fmt.Sprintf("Field '%s' is invalid: %s", e.Field(), e.Tag()))
-				}
+			log.Printf("Read error: %v", err)
+		}
 
-				conn.WriteJSON(types.WsErrorMessageResponse{
-					ID:      msg.ID,
-					Message: errorMessages,
-					Status:  "validation_error",
-				})
-				log.Printf("Client invalid message %s: %v", clientID, errorMessages)
-				continue
+		if err := utils.Validate.Struct(msg); err != nil {
+			var errorMessages []string
+			for _, e := range err.(validator.ValidationErrors) {
+				errorMessages = append(errorMessages, fmt.Sprintf("Field '%s' is invalid: %s", e.Field(), e.Tag()))
 			}
+
+			conn.WriteJSON(types.WsErrorMessageResponse{
+				ID:      msg.ID,
+				Message: errorMessages,
+				Status:  "validation_error",
+			})
+			log.Printf("Client invalid message %s: %v", clientID, errorMessages)
+			continue
 		}
 
 		msg.ID = uuid.New().String()
 		msg.ClientID = clientID
 		msg.CreatedAt = time.Now()
+		msg.Status = "pending"
+
+		receiverDevices := GetUserDevicesConnections(msg.ReceiverID)
+
+		connectionsCopy := make([]types.Connection, len(receiverDevices))
+		copy(connectionsCopy, receiverDevices)
+
+		if len(connectionsCopy) > 0 {
+			for _, conn := range connectionsCopy {
+				err := conn.Channel.WriteJSON(msg)
+				if err != nil {
+					log.Printf("An error occurred while sending the message to %s: %v", conn.ClientID, err)
+					continue
+				}
+			}
+			msg.Status = "delivered"
+		}
 
 		body, err := json.Marshal(msg)
 		if err != nil {
@@ -100,40 +119,33 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 			return
 		}
 
-		receiverDevices := GetUserDevicesConnections(msg.ReceiverID)
+		retries := 0
+		maxRetries := 3
 
-		for _, conn := range receiverDevices {
-			if err := conn.Channel.WriteJSON(msg); err != nil {
-				log.Printf("An error occurred while sending the message to %s: %v", conn.ClientID, err)
-			}
-		}
-
-		err = ch.Publish(
-			"chat_events",
-			"",
-			false,
-			false,
-			amqp.Publishing{
-				Headers: amqp.Table{
-					"persistence": "true",
+		for retries < maxRetries {
+			err = ch.Publish(
+				"chat_events",
+				"",
+				false,
+				false,
+				amqp.Publishing{
+					Headers:     amqp.Table{"persistence": "true"},
+					ContentType: "application/json",
+					Body:        body,
 				},
-				ContentType: "application/json",
-				Body:        body,
-			},
-		)
-
-		if err != nil {
-			log.Println("Failed to publish message:", err)
+			)
+			if err == nil {
+				log.Println("Message published on exchange")
+				break
+			}
+			log.Printf("Publish failed (attempt %d): %v", retries+1, err)
+			time.Sleep(1 * time.Second)
+			retries++
 		}
 
-		if err := conn.WriteJSON(types.WsSuccessMessageResponse{
-			TempID:  msg.TempID,
-			Status:  "sent",
-			Message: "Message sent successfully",
-		}); err != nil {
+		if err := conn.WriteJSON(msg); err != nil {
 			log.Printf("An unexpected error occurred while sending message to user: %v", err)
-			return
+			continue
 		}
-		log.Println("Message published on exchange")
 	}
 }
