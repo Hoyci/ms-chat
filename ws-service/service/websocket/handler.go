@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,7 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 	coreTypes "github.com/hoyci/ms-chat/core/types"
 	"github.com/hoyci/ms-chat/ws-service/service/rabbitmq"
-	"github.com/hoyci/ms-chat/ws-service/service/redis"
 	"github.com/hoyci/ms-chat/ws-service/types"
 	"github.com/hoyci/ms-chat/ws-service/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -48,11 +46,6 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		Channel:  conn,
 	})
 
-	err = redis.GetClient().Incr(r.Context(), fmt.Sprintf("connections:%d", userID)).Err()
-	if err != nil {
-		log.Printf("Unable to incrementt user connections (user %d): %v", userID, err)
-	}
-
 	conn.WriteJSON(types.WsConnectionResponse{
 		UserID:   userID,
 		ClientID: clientID,
@@ -60,26 +53,17 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		Status:   "connected",
 	})
 
-	go manageConnection(conn, clientID, userID)
+	go manageConnection(conn, clientID)
 }
 
-func manageConnection(conn *websocket.Conn, clientID string, userID int) {
-	ch := rabbitmq.GetChannel()
+func manageConnection(conn *websocket.Conn, clientID string) {
 	defer func() {
 		conn.Close()
 		RemoveConnection(clientID)
 		log.Printf("Connection %s closed", clientID)
-
-		err := redis.GetClient().Decr(context.Background(), fmt.Sprintf("connections:%d", userID)).Err()
-		if err != nil {
-			log.Printf("An error occurred while attempting to remove the status (user %d): %v", userID, err)
-		}
-
-		count, err := redis.GetClient().Get(context.Background(), fmt.Sprintf("connections:%d", userID)).Int()
-		if err == nil && count <= 0 {
-			redis.GetClient().Del(context.Background(), fmt.Sprintf("connections:%d", userID))
-		}
 	}()
+
+	ch := rabbitmq.GetChannel()
 
 	for {
 		var msg coreTypes.Message
@@ -97,25 +81,16 @@ func manageConnection(conn *websocket.Conn, clientID string, userID int) {
 				}
 
 				conn.WriteJSON(types.WsErrorMessageResponse{
-					TempID:  "",
+					TempID:  msg.TempID,
 					Message: errorMessages,
 					Status:  "validation_error",
 				})
 				log.Printf("Client invalid message %s: %v", clientID, errorMessages)
 				continue
 			}
-
-			// if err := conn.WriteJSON(types.WsErrorMessageResponse{
-			// 	TempID:  "",
-			// 	Message: []string{"Invalid format JSON"},
-			// 	Status:  "error",
-			// }); err != nil {
-			// 	log.Printf("An unexpected error occurred while sending error message: %v", err)
-			// 	return
-			// }
-			// continue
 		}
 
+		msg.TempID = uuid.New().String()
 		msg.ClientID = clientID
 		msg.Timestamp = time.Now().UTC().Format(time.RFC3339)
 
@@ -123,6 +98,14 @@ func manageConnection(conn *websocket.Conn, clientID string, userID int) {
 		if err != nil {
 			log.Printf("An unexpected error occurred while marshaling message: %v", err)
 			return
+		}
+
+		receiverDevices := GetUserDevicesConnections(msg.ReceiverID)
+
+		for _, conn := range receiverDevices {
+			if err := conn.Channel.WriteJSON(msg); err != nil {
+				log.Printf("An error occurred while sending the message to %s: %v", conn.ClientID, err)
+			}
 		}
 
 		err = ch.Publish(
@@ -144,8 +127,9 @@ func manageConnection(conn *websocket.Conn, clientID string, userID int) {
 		}
 
 		if err := conn.WriteJSON(types.WsSuccessMessageResponse{
-			TempID: msg.TempID,
-			Status: "sent", Message: "Message sent successfully",
+			TempID:  msg.TempID,
+			Status:  "sent",
+			Message: "Message sent successfully",
 		}); err != nil {
 			log.Printf("An unexpected error occurred while sending message to user: %v", err)
 			return

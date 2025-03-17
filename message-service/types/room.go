@@ -9,6 +9,7 @@ import (
 
 type Room struct {
 	ID        bson.ObjectID `json:"_id" bson:"_id"`
+	Users     []int         `json:"users" bson:"users"`
 	CreatedAt time.Time     `json:"created_at" bson:"created_at"`
 	UpdatedAt *time.Time    `json:"updated_at" bson:"updated_at"`
 	DeletedAt *time.Time    `json:"deleted_at" bson:"deleted_at"`

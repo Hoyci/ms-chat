@@ -10,6 +10,7 @@ import (
 	"github.com/hoyci/ms-chat/message-service/config"
 	"github.com/hoyci/ms-chat/message-service/db"
 	"github.com/hoyci/ms-chat/message-service/service/message"
+	"github.com/hoyci/ms-chat/message-service/service/redis"
 	"github.com/hoyci/ms-chat/message-service/service/room"
 	"github.com/hoyci/ms-chat/message-service/types"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -70,36 +71,27 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 	var wsMessage coreTypes.Message
 	json.Unmarshal(msgBody, &wsMessage)
 
-	b, err := json.Marshal(wsMessage)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println(string(b))
-
 	// Pegar ou cria o canal da mensagem
 	roomStore := room.GetRoomStore(dbRepo)
 	messageStore := message.GetMessageStore(dbRepo)
-	log.Printf("Pegando ou criando canal da mensagem: %+v", wsMessage)
-	room, err := roomStore.GetOrCreate(context.Background(), wsMessage.RoomID)
+	room, err := roomStore.GetOrCreate(context.Background(), wsMessage.RoomID, []int{wsMessage.SenderID, wsMessage.ReceiverID})
 	if err != nil {
 		log.Printf("Error with GetOrCreateRoom: %v", err)
 		return err
 	}
 
-	// Persistir mensagem no banco de dados com status pending
-	log.Printf("Persistindo mensagem2: %+v", wsMessage)
+	// Persistir mensagem no banco de dados com status pendin
 	messageID, err := messageStore.Create(
 		context.Background(),
 		types.Message{
-			ID:         bson.NewObjectID(),
-			RoomID:     room.ID.Hex(),
-			SenderID:   wsMessage.SenderID,
-			ReceiverID: wsMessage.ReceiverID,
-			Content:    wsMessage.Content,
-			Status:     types.StatusPending,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  nil,
-			DeletedAt:  nil,
+			ID:        bson.NewObjectID(),
+			RoomID:    room.ID,
+			UserID:    wsMessage.SenderID,
+			Content:   wsMessage.Content,
+			Status:    types.StatusPending,
+			CreatedAt: time.Now(),
+			UpdatedAt: nil,
+			DeletedAt: nil,
 		},
 	)
 	if err != nil {
@@ -107,9 +99,48 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 		return err
 	}
 
-	log.Printf("message: %s", messageID)
+	log.Printf("message: %s", messageID.Hex())
 
 	// Verifica se o usuário está online
-	// Se estiver, atualizada status da mensagem para delivered e publica na fila de "broadcast"
+	if isOnline := redis.IsUserOnline(wsMessage.ReceiverID); isOnline {
+		// atualiza status da mensagem para delivered
+
+		// publica na fila de "broadcast"
+		body, err := json.Marshal(types.Message{
+			ID:        messageID,
+			RoomID:    room.ID,
+			UserID:    wsMessage.ReceiverID,
+			Content:   "teste",
+			Status:    "delivered",
+			CreatedAt: time.Now(),
+			UpdatedAt: nil,
+			DeletedAt: nil,
+		})
+		if err != nil {
+			log.Printf("An unexpected error occurred while marshaling message: %v", err)
+			return nil
+		}
+
+		ch := GetChannel()
+		err = ch.Publish(
+			"chat_events",
+			"",
+			false,
+			false,
+			amqp.Publishing{
+				Headers: amqp.Table{
+					"broadcast": "true",
+				},
+				ContentType: "application/json",
+				Body:        body,
+			},
+		)
+
+		if err != nil {
+			log.Println("Failed to publish message:", err)
+			return nil
+		}
+	}
+
 	return nil
 }

@@ -2,9 +2,10 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 
-	"github.com/hoyci/ms-chat/ws-service/config"
+	"github.com/hoyci/ms-chat/message-service/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,4 +26,14 @@ func Init() {
 
 func GetClient() *redis.Client {
 	return redisClient
+}
+
+func IsUserOnline(userID int) bool {
+	count, err := GetClient().Get(context.Background(), fmt.Sprintf("connections:%d", userID)).Int()
+	if err != nil && err != redis.Nil {
+		log.Printf("An unexpected error occurred while checking user status: %v", err)
+		return false
+	}
+
+	return count > 0
 }
