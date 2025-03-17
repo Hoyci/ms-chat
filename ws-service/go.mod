@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/hoyci/ms-chat/core v0.0.0-20250315182934-d08dbbffd5f2
+	github.com/hoyci/ms-chat/core v0.0.0-20250317222038-c2d5ca2c29e6
 	github.com/rabbitmq/amqp091-go v1.10.0
 )
 
@@ -21,9 +21,4 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 )
 
-require (
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/go-playground/validator/v10 v10.25.0
-	github.com/redis/go-redis/v9 v9.7.1
-)
+require github.com/go-playground/validator/v10 v10.25.0

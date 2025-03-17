@@ -16,13 +16,13 @@ type WsConnectionResponse struct {
 }
 
 type WsSuccessMessageResponse struct {
-	TempID  string `json:"temp_id" validate:"required"`
+	ID      string `json:"_id" validate:"required"`
 	Message string `json:"message" validate:"required"`
 	Status  string `json:"status" validate:"required"`
 }
 
 type WsErrorMessageResponse struct {
-	TempID  string   `json:"temp_id" validate:"required"`
+	ID      string   `json:"_id" validate:"required"`
 	Message []string `json:"message" validate:"required"`
 	Status  string   `json:"status" validate:"required"`
 }

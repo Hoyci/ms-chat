@@ -81,7 +81,7 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 				}
 
 				conn.WriteJSON(types.WsErrorMessageResponse{
-					TempID:  msg.TempID,
+					ID:      msg.ID,
 					Message: errorMessages,
 					Status:  "validation_error",
 				})
@@ -90,9 +90,9 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 			}
 		}
 
-		msg.TempID = uuid.New().String()
+		msg.ID = uuid.New().String()
 		msg.ClientID = clientID
-		msg.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		msg.CreatedAt = time.Now()
 
 		body, err := json.Marshal(msg)
 		if err != nil {
