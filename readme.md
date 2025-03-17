@@ -4,7 +4,6 @@ A scalable real-time chat application built with microservices architecture. Sup
 
 ![Architecture Diagram](./architecture.png)
 
-
 ## Tech Stack 🛠️
 
 | **Microservice**         | **Responsability**                          | **Technologies**        |
@@ -52,3 +51,7 @@ A scalable real-time chat application built with microservices architecture. Sup
 - Message events, status updates and notifications.
 - **WebSocket**:
 - Real-time communication between client and server.
+
+TODO
+
+- [ ] Adicionar Dead letter queue no rabbitmq para persistir mensagens
