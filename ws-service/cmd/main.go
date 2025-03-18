@@ -16,7 +16,6 @@ func main() {
 
 	rabbitmq.Init()
 	defer rabbitmq.GetChannel().Close()
-	// websocket.StartBroadcastConsumer()
 
 	utils.InitValidator()
 

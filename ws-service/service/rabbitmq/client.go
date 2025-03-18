@@ -26,7 +26,6 @@ func Init() {
 	createExchange("user_events", "fanout")
 
 	persistenceQueue := createQueue(config.Envs.PersistenceQueueName)
-	userEventsQueue := createQueue(config.Envs.UserEventsQueueName)
 
 	channel.QueueBind(
 		persistenceQueue.Name,
@@ -34,14 +33,6 @@ func Init() {
 		"chat_events",
 		false,
 		amqp.Table{"x-match": "any", "persistence": "true"},
-	)
-
-	channel.QueueBind(
-		userEventsQueue.Name,
-		"",
-		"user_events",
-		false,
-		amqp.Table{"x-match": "any", "events": "true"},
 	)
 }
 

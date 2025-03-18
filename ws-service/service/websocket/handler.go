@@ -45,6 +45,7 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		UserID:   userID,
 		Channel:  conn,
 	})
+
 	conn.WriteJSON(types.WsConnectionResponse{
 		UserID:   userID,
 		ClientID: clientID,
