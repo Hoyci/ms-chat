@@ -10,7 +10,6 @@ import (
 	"github.com/hoyci/ms-chat/message-service/db"
 	"github.com/hoyci/ms-chat/message-service/service/healthcheck"
 	"github.com/hoyci/ms-chat/message-service/service/rabbitmq"
-	"github.com/hoyci/ms-chat/message-service/service/redis"
 	"github.com/hoyci/ms-chat/message-service/service/room"
 )
 
@@ -25,9 +24,6 @@ import (
 func main() {
 	dbRepo := db.NewMongoRepository(config.Envs)
 
-	redis.Init()
-	defer redis.GetClient().Close()
-
 	rabbitmq.Init(dbRepo)
 	defer rabbitmq.GetChannel().Close()
 	go rabbitmq.ConsumeQueue(
@@ -35,11 +31,6 @@ func main() {
 		config.Envs.PersistenceQueueName,
 		rabbitmq.ProcessChatMessage,
 	)
-	// go rabbitmq.ConsumeQueue(
-	// 	rabbitmq.GetChannel(),
-	// 	config.Envs.BroadcastQueueName,
-	// 	rabbitmq.ProcessBroadcastQueue,
-	// )
 
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 	apiServer := api.NewApiServer(path)

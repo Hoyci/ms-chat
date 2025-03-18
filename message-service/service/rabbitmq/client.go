@@ -71,7 +71,7 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 	roomStore := room.GetRoomStore(dbRepo)
 	messageStore := message.GetMessageStore(dbRepo)
 
-	room, err := roomStore.GetOrCreate(context.Background(), wsMessage.RoomID, []int{wsMessage.SenderID, wsMessage.ReceiverID})
+	room, err := roomStore.GetOrCreate(context.Background(), []int{wsMessage.SenderID, wsMessage.ReceiverID})
 	if err != nil {
 		log.Printf("Error with GetOrCreateRoom: %v", err)
 		return err
@@ -79,15 +79,16 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 
 	messageID, err := messageStore.Create(
 		context.Background(),
-		coreTypes.Message{
-			RoomID:     room.ID.Hex(),
-			SenderID:   wsMessage.SenderID,
-			ReceiverID: wsMessage.ReceiverID,
-			Content:    wsMessage.Content,
-			Status:     wsMessage.Status,
-			CreatedAt:  wsMessage.CreatedAt,
-			UpdatedAt:  nil,
-			DeletedAt:  nil,
+		map[string]any{
+			"_id":         bson.NewObjectID(),
+			"room_id":     room.ID,
+			"sender_id":   wsMessage.SenderID,
+			"receiver_id": wsMessage.ReceiverID,
+			"content":     wsMessage.Content,
+			"status":      wsMessage.Status,
+			"created_at":  wsMessage.CreatedAt,
+			"updated_at":  nil,
+			"deleted_at":  nil,
 		},
 	)
 	if err != nil {
@@ -96,37 +97,6 @@ func ProcessChatMessage(ctx context.Context, msgBody []byte) error {
 	}
 
 	log.Printf("message: %s", messageID.Hex())
-
-	return nil
-}
-
-func ProcessBroadcastQueue(ctx context.Context, msgBody []byte) error {
-	var event map[string]interface{}
-	json.Unmarshal(msgBody, &event)
-
-	if event["event"] == "user_online" {
-		// userID := int(event["user_id"].(float64))
-		// messages := fetchPendingMessages(userID)
-		messageStore := message.GetMessageStore(dbRepo)
-		messageStore.List(context.Background(), bson.M{})
-
-		// body, _ := json.Marshal(types.BroadcastMessage{
-		// 	UserID:    userID,
-		// 	Messages:  messages,
-		// 	Timestamp: time.Now().UTC(),
-		// })
-
-		channel.Publish(
-			"",
-			"broadcast_queue",
-			false,
-			false,
-			amqp.Publishing{
-				ContentType: "application/json",
-				Body:        nil,
-			},
-		)
-	}
 
 	return nil
 }

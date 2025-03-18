@@ -1,9 +1,7 @@
 package rabbitmq
 
 import (
-	"encoding/json"
 	"log"
-	"time"
 
 	"github.com/hoyci/ms-chat/ws-service/config"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -27,7 +25,24 @@ func Init() {
 	createExchange("chat_events", "headers")
 	createExchange("user_events", "fanout")
 
-	createQueue("persistence_queue", amqp.Table{"x-match": "any", "persistence": "true"})
+	persistenceQueue := createQueue(config.Envs.PersistenceQueueName)
+	userEventsQueue := createQueue(config.Envs.UserEventsQueueName)
+
+	channel.QueueBind(
+		persistenceQueue.Name,
+		"",
+		"chat_events",
+		false,
+		amqp.Table{"x-match": "any", "persistence": "true"},
+	)
+
+	channel.QueueBind(
+		userEventsQueue.Name,
+		"",
+		"user_events",
+		false,
+		amqp.Table{"x-match": "any", "events": "true"},
+	)
 }
 
 func createExchange(name string, kind string) {
@@ -45,7 +60,7 @@ func createExchange(name string, kind string) {
 	}
 }
 
-func createQueue(name string, headers amqp.Table) {
+func createQueue(name string) amqp.Queue {
 	q, err := channel.QueueDeclare(
 		name,
 		true,
@@ -59,42 +74,9 @@ func createQueue(name string, headers amqp.Table) {
 		log.Printf("Failed to declare queue %s", name)
 	}
 
-	channel.QueueBind(
-		q.Name,
-		"",
-		"chat_events",
-		false,
-		headers,
-	)
+	return q
 }
 
 func GetChannel() *amqp.Channel {
 	return channel
-}
-
-func PublishUserOnlineEvent(userID int) {
-	body, err := json.Marshal(map[string]interface{}{
-		"user_id": userID,
-		"event":   "user_online",
-		"time":    time.Now().UTC(),
-	})
-
-	if err != nil {
-		log.Printf("Failed to marshal event body %v", err)
-	}
-
-	err = channel.Publish(
-		"user_events",
-		"",
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-		},
-	)
-
-	if err != nil {
-		log.Printf("Failed to publish user online event: %v", err)
-	}
 }

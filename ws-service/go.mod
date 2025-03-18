@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/hoyci/ms-chat/core v0.0.0-20250317231159-68db3361ce67
+	github.com/hoyci/ms-chat/core v0.0.0-20250318112533-ea612b3bb7c4
 	github.com/rabbitmq/amqp091-go v1.10.0
 )
 

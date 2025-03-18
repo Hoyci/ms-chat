@@ -16,6 +16,7 @@ type Config struct {
 	RabbitMQURL          string `env:"RABBITMQ_URL" envDefault:"amqp://user:password@localhost:5672/"`
 	PersistenceQueueName string `env:"PERSISTENCE_QUEUE_NAME" envDefault:"persistence_queue"`
 	BroadcastQueueName   string `env:"BROADCAST_QUEUE_NAME" envDefault:"broadcast_queue"`
+	UserEventsQueueName  string `env:"USER_EVENTS_QUEUE_NAME" envDefault:"user_events_queue"`
 	RedisAddr            string `env:"REDIS_ADDR" envDefault:"localhost:6379"`
 	RedisPassword        string `env:"REDIS_PASSWORD" envDefault:"password"`
 	RedisDB              int    `env:"REDIS_DB" envDefault:"0"`

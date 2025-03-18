@@ -38,9 +38,6 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingConnections := GetUserDevicesConnections(userID)
-	isFirstConnection := len(existingConnections) == 0
-
 	clientID := uuid.New().String()
 
 	AddUserDeviceConnection(clientID, types.Connection{
@@ -48,11 +45,6 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		UserID:   userID,
 		Channel:  conn,
 	})
-
-	if isFirstConnection {
-		rabbitmq.PublishUserOnlineEvent(userID)
-	}
-
 	conn.WriteJSON(types.WsConnectionResponse{
 		UserID:   userID,
 		ClientID: clientID,

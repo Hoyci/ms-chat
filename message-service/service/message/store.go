@@ -25,7 +25,7 @@ func GetMessageStore(dbRepo *db.MongoRepository) *MessageStore {
 	return instance
 }
 
-func (s *MessageStore) Create(ctx context.Context, newMessage coreTypes.Message) (bson.ObjectID, error) {
+func (s *MessageStore) Create(ctx context.Context, newMessage map[string]any) (bson.ObjectID, error) {
 	result, err := db.Add(
 		s.dbRepo,
 		ctx,

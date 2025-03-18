@@ -82,14 +82,7 @@ func GetByFilter[T any](repo *MongoRepository, ctx context.Context, collectionNa
 	return &result, nil
 }
 
-func GetOrCreate[T any](repo *MongoRepository, ctx context.Context, collectionName string, id string, document T) (*T, error) {
-	objectID, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"_id": objectID}
-
+func GetOrCreate[T any](repo *MongoRepository, ctx context.Context, collectionName string, filter bson.M, document T) (*T, error) {
 	existing, err := GetByFilter[T](repo, ctx, collectionName, filter)
 	if err == nil {
 		return existing, nil

@@ -24,6 +24,8 @@ github.com/hoyci/ms-chat/core v0.0.0-20250317222422-bcceb1f7fdcf h1:asOQl/J+hQb+
 github.com/hoyci/ms-chat/core v0.0.0-20250317222422-bcceb1f7fdcf/go.mod h1:HdPRpv3m1l2sM3oun1KPTkLRD4jDumJFEAX0yAjiirI=
 github.com/hoyci/ms-chat/core v0.0.0-20250317231159-68db3361ce67 h1:6d99rPuEsbmz20r4W8LrIlRfRT4ysrPPBDmHq/6R5rE=
 github.com/hoyci/ms-chat/core v0.0.0-20250317231159-68db3361ce67/go.mod h1:HdPRpv3m1l2sM3oun1KPTkLRD4jDumJFEAX0yAjiirI=
+github.com/hoyci/ms-chat/core v0.0.0-20250318112533-ea612b3bb7c4 h1:qXEqczi4N8yOBPgPzp0maMcjRNyIvgBE+3mhf6KiYkc=
+github.com/hoyci/ms-chat/core v0.0.0-20250318112533-ea612b3bb7c4/go.mod h1:HdPRpv3m1l2sM3oun1KPTkLRD4jDumJFEAX0yAjiirI=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

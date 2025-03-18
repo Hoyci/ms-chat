@@ -56,8 +56,14 @@ func (s *RoomStore) GetByID(ctx context.Context, roomID string) (*types.Room, er
 	return result, nil
 }
 
-func (s *RoomStore) GetOrCreate(ctx context.Context, roomID string, users []int) (*types.Room, error) {
-	result, err := db.GetOrCreate(s.dbRepo, ctx, "rooms", roomID, types.Room{
+func (s *RoomStore) GetOrCreate(ctx context.Context, users []int) (*types.Room, error) {
+	filter := bson.M{
+		"users": bson.M{
+			"$all": users,
+		},
+	}
+
+	result, err := db.GetOrCreate(s.dbRepo, ctx, "rooms", filter, types.Room{
 		ID:        bson.NewObjectID(),
 		Users:     users,
 		CreatedAt: time.Now(),
