@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
+	coreTypes "github.com/hoyci/ms-chat/core/types"
 	"github.com/hoyci/ms-chat/message-service/db"
-	"github.com/hoyci/ms-chat/message-service/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -25,7 +25,7 @@ func GetMessageStore(dbRepo *db.MongoRepository) *MessageStore {
 	return instance
 }
 
-func (s *MessageStore) Create(ctx context.Context, newMessage types.Message) (bson.ObjectID, error) {
+func (s *MessageStore) Create(ctx context.Context, newMessage coreTypes.Message) (bson.ObjectID, error) {
 	result, err := db.Add(
 		s.dbRepo,
 		ctx,
@@ -40,12 +40,12 @@ func (s *MessageStore) Create(ctx context.Context, newMessage types.Message) (bs
 	return result, nil
 }
 
-func (s *MessageStore) List(ctx context.Context, roomId string) ([]types.Message, error) {
-	result, err := db.List[types.Message](
+func (s *MessageStore) List(ctx context.Context, filter bson.M) ([]coreTypes.Message, error) {
+	result, err := db.List[coreTypes.Message](
 		s.dbRepo,
 		ctx,
 		"messages",
-		bson.M{"room_id": roomId},
+		filter,
 	)
 
 	if err != nil {

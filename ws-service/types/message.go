@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	coreTypes "github.com/hoyci/ms-chat/core/types"
 )
 
 type Status string
@@ -20,4 +22,10 @@ type Message struct {
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
+}
+
+type BroadcastMessage struct {
+	UserID    int                 `json:"user_id"`
+	Messages  []coreTypes.Message `json:"messages"`
+	Timestamp time.Time           `json:"timestamp"`
 }

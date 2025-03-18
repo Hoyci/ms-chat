@@ -36,7 +36,7 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-playground/validator/v10 v10.25.0
-	github.com/hoyci/ms-chat/core v0.0.0-20250315182934-d08dbbffd5f2
+	github.com/hoyci/ms-chat/core v0.0.0-20250317231159-68db3361ce67
 	github.com/joho/godotenv v1.5.1
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect

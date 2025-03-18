@@ -35,6 +35,11 @@ func main() {
 		config.Envs.PersistenceQueueName,
 		rabbitmq.ProcessChatMessage,
 	)
+	// go rabbitmq.ConsumeQueue(
+	// 	rabbitmq.GetChannel(),
+	// 	config.Envs.BroadcastQueueName,
+	// 	rabbitmq.ProcessBroadcastQueue,
+	// )
 
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 	apiServer := api.NewApiServer(path)

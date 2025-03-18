@@ -38,6 +38,9 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existingConnections := GetUserDevicesConnections(userID)
+	isFirstConnection := len(existingConnections) == 0
+
 	clientID := uuid.New().String()
 
 	AddUserDeviceConnection(clientID, types.Connection{
@@ -45,6 +48,10 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		UserID:   userID,
 		Channel:  conn,
 	})
+
+	if isFirstConnection {
+		rabbitmq.PublishUserOnlineEvent(userID)
+	}
 
 	conn.WriteJSON(types.WsConnectionResponse{
 		UserID:   userID,
@@ -95,7 +102,7 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 		msg.ID = uuid.New().String()
 		msg.ClientID = clientID
 		msg.CreatedAt = time.Now()
-		msg.Status = "pending"
+		msg.Status = "delivered"
 
 		receiverDevices := GetUserDevicesConnections(msg.ReceiverID)
 
@@ -110,7 +117,8 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 					continue
 				}
 			}
-			msg.Status = "delivered"
+		} else {
+			msg.Status = "pending"
 		}
 
 		body, err := json.Marshal(msg)
@@ -135,7 +143,7 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 				},
 			)
 			if err == nil {
-				log.Println("Message published on exchange")
+				log.Printf("Message %s published on exchange", msg.ID)
 				break
 			}
 			log.Printf("Publish failed (attempt %d): %v", retries+1, err)
