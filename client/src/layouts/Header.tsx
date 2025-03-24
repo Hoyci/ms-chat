@@ -5,6 +5,7 @@ import ChannelsIcon from "../assets/channels.svg?react";
 import CommunitiesIcon from "../assets/communities.svg?react";
 import ConfigIcon from "../assets/config.svg?react";
 import UserIcon from "../assets/user.svg?react";
+import IconButton from "../components/IconButton";
 
 const allIcons = [
   {
@@ -50,7 +51,7 @@ function Header() {
   const handleSelect = (index: number) => setSelected(index);
 
   return (
-    <header className="w-16 h-full px-3 bg-primary-100 text-neutral-100">
+    <header className="w-16 h-full px-3 bg-primary-100 text-neutral-100 border-r-2 border-primary-50">
       <div className="flex flex-col items-center h-full justify-between py-2.5">
         <div className="flex flex-col items-center gap-2.5">
           {topIcons.map(({ icon, disabled, width, height, tooltip }, index) => (
@@ -92,54 +93,5 @@ function Header() {
     </header>
   );
 }
-
-const IconButton = ({
-  index,
-  Icon,
-  isSelected,
-  disabled,
-  width,
-  height,
-  onClick,
-  tooltipText = "",
-}: {
-  index: number;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  isSelected: boolean;
-  disabled: boolean;
-  width?: string;
-  height?: string;
-  onClick: (index: number) => void;
-  tooltipText?: string;
-}) => (
-  <div className="group relative">
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => !disabled && onClick(index)}
-      className={`w-10 h-10 flex items-center justify-center
-          transition-all duration-200 ${
-            disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-          } ${isSelected ? "bg-neutral-50 rounded-full" : ""}`}
-    >
-      <Icon
-        className={`${width || "w-6"} ${height || "h-6"} ${
-          disabled ? "text-neutral-400" : ""
-        }`}
-      />
-    </button>
-
-    {!disabled && tooltipText && (
-      <div
-        className="absolute left-full top-1/2 -translate-y-1/2 ml-2
-            opacity-0 group-hover:opacity-100 transition-opacity duration-200
-            px-3 py-1.5 bg-white text-neutral-600 text-xs font-medium
-            rounded-2xl shadow-lg whitespace-nowrap pointer-events-none"
-      >
-        {tooltipText}
-      </div>
-    )}
-  </div>
-);
 
 export default Header;
