@@ -26,15 +26,15 @@
     "baseUrl": "src",
     "paths": {
       "@components/*": ["components/*"],
-      "@components": ["components"],
       "@layouts/*": ["layouts/*"],
       "@pages/*": ["pages/*"],
       "@assets/*": ["assets/*"],
-      "@hooks": ["hooks"],
+      "@hooks/*": ["hooks/*"],
       "@types/*": ["types/*"],
       "@utils/*": ["utils/*"],
       "@contexts/*": ["contexts/*"],
-      "@api": ["api"]
+      "@api/*": ["api/*"],
+      "@store/*": ["store/*"],
     }
   },
   "include": ["src"]

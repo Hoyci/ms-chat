@@ -8,7 +8,7 @@ function App() {
       <div className="flex top-[19px] w-[calc(100%-38px)] max-w-[1600px] h-[calc(100%-38px)]">
         <Header />
         <Contacts />
-        <Chat />
+        <Chat /> 
       </div>
     </div>
   );
