@@ -1,11 +1,12 @@
 import { IMessage } from '@types/message';
+import { CONTACTS } from 'mocks/contacts';
 import { create } from 'zustand';
 
 export type IContact = {
     id: number;
     name: string;
     avatar?: string | null;
-    lastMessage: IMessage
+    messages: IMessage[]
 };
 
 type ContactStore = {
@@ -18,44 +19,7 @@ type ContactStore = {
   
 
 export const useContactStore = create<ContactStore>((set) => ({
-    contacts: [
-      {
-        id: 1,
-        name: "John Doe",
-        avatar: null,
-        lastMessage: {
-          id: 1,
-          text: "Opa, bom dia",
-          sendId: 1,
-          timestamp: new Date().toLocaleDateString(),
-          status: "sent",
-        }
-      },
-      {
-        id: 2,
-        name: "Mac Miller",
-        avatar: "https://i.pravatar.cc/100?img=1",
-        lastMessage: {
-          id: 1,
-          text: "Opa, bom dia",
-          sendId: 1,
-          timestamp: new Date().toLocaleDateString(),
-          status: "delivered",
-        }
-      },
-      {
-        id: 3,
-        name: "Kendrick Lamar",
-        avatar: "https://i.pravatar.cc/100?img=2",
-        lastMessage: {
-          id: 1,
-          text: "Opa, bom dia",
-          sendId: 1,
-          timestamp: new Date().toLocaleDateString(),
-          status: "pending",
-        }
-      },
-    ],
+    contacts: CONTACTS,
     selectedContact: null,
     setSelectedContact: (contact) => set({ selectedContact: contact }),
     addContact: (contact) => 

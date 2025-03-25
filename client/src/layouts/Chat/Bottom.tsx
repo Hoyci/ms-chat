@@ -1,13 +1,37 @@
 import SendIcon from "@assets/send.svg?react";
 import PlusIcon from "@assets/plus.svg?react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { useContactStore } from "@store/contactStore";
 
 interface BottomProps {
   inputRef: React.RefObject<HTMLInputElement | null>,
-  sendMessage: () => void
 }
 
-function Bottom({ inputRef, sendMessage }: BottomProps) {
+function Bottom({ inputRef }: BottomProps) {
+  const { selectedContact, updateContact } = useContactStore();
+
+  const sendMessage = useCallback(() => {
+    if (!selectedContact) return;
+    
+    if (!inputRef.current) return;
+
+    const message = inputRef.current.value.trim();
+    if (message === "") return;
+
+
+    updateContact(
+      selectedContact.id, 
+      selectedContact.messages.push({
+          id: selectedContact.messages[-1] + 1,
+          sendId: 1, 
+          text: message,
+          status: "pending", 
+          timestamp: new Date().toLocaleTimeString('pt-BR')
+      }))
+
+    inputRef.current.value = "";
+  }, [inputRef, selectedContact, updateContact]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!inputRef.current) return;

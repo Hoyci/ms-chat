@@ -16,10 +16,12 @@ function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
     onSelectContact(contact);
   };
 
+  console.log(contacts[contacts.length -1])
+
   return (
     <div className="scroll-area flex flex-col gap-[0.75px] w-full h-[calc(100vh-160px)] overflow-y-auto mt-2">
       {contacts.length ? (
-        contacts.map((contact: IContact) => (
+        contacts.map((contact) => (
           <div
             key={contact.id}
             className={`flex items-center gap-3 pl-3 cursor-pointer 
@@ -46,19 +48,24 @@ function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
             <div className="flex-1 border-y-[0.2px] border-primary-100 py-3 pr-3">
               <div className="flex justify-between">
                 <span className="font-semibold">{contact.name}</span>
-                <span className="text-sm text-gray-500">{contact.lastMessage.timestamp}</span>
+                {contact.messages.length > 0 && <span className="text-sm text-gray-500">{contact.messages[contact.messages.length -1].timestamp}</span>}
               </div>
 
-              <div className="flex items-center gap-1">
+              {contact.messages.length > 0 ?
+                <div className="flex items-center gap-1">
                 <span className="">
                   {React.createElement(
-                    messageStatus[contact.lastMessage.status as keyof typeof messageStatus]
+                    messageStatus[contact.messages[contact.messages.length -1].status as keyof typeof messageStatus]
                   )}
                 </span>
                 <p className="text-gray-600 text-sm truncate">
-                  {contact.lastMessage.text}
+                  {contact.messages[contact.messages.length -1].text}
                 </p>
-              </div>
+              </div> :
+              <span className="text-sm">
+                There isn't any message yet
+              </span>
+              }
             </div>
           </div>
         ))
