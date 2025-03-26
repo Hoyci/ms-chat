@@ -14,7 +14,7 @@ type AuthStore interface {
 
 type CustomClaims struct {
 	ID       string `json:"id"`
-	UserID   int    `json:"userId"`
+	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	jwt.RegisteredClaims

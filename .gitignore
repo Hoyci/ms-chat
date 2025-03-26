@@ -1,3 +1,5 @@
+
+**/node_modules
 **/tmp
 **/private_key*
 **/public_key*
@@ -27,3 +29,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+

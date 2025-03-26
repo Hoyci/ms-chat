@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import UserIcon from "@assets/user.svg?react";
-import type { IContact } from "@store/contactStore"
-import { messageStatus } from "@types/message";
+import type { IContact } from "@store/contactStore";
+import { messageStatus } from "@store/message";
 
 interface ScrollAreaProps {
-  contacts: IContact[]
+  contacts: IContact[];
   onSelectContact: (contact: IContact) => void;
 }
 
@@ -15,8 +15,6 @@ function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
     setLocalSelected(contact.id);
     onSelectContact(contact);
   };
-
-  console.log(contacts[contacts.length -1])
 
   return (
     <div className="scroll-area flex flex-col gap-[0.75px] w-full h-[calc(100vh-160px)] overflow-y-auto mt-2">
@@ -48,24 +46,30 @@ function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
             <div className="flex-1 border-y-[0.2px] border-primary-100 py-3 pr-3">
               <div className="flex justify-between">
                 <span className="font-semibold">{contact.name}</span>
-                {contact.messages.length > 0 && <span className="text-sm text-gray-500">{contact.messages[contact.messages.length -1].timestamp}</span>}
+                {contact.messages.length > 0 && (
+                  <span className="text-sm text-gray-500">
+                    {contact.messages[contact.messages.length - 1].timestamp}
+                  </span>
+                )}
               </div>
 
-              {contact.messages.length > 0 ?
+              {contact.messages.length > 0 ? (
                 <div className="flex items-center gap-1">
-                <span className="">
-                  {React.createElement(
-                    messageStatus[contact.messages[contact.messages.length -1].status as keyof typeof messageStatus]
-                  )}
-                </span>
-                <p className="text-gray-600 text-sm truncate">
-                  {contact.messages[contact.messages.length -1].text}
-                </p>
-              </div> :
-              <span className="text-sm">
-                There isn't any message yet
-              </span>
-              }
+                  <span className="">
+                    {React.createElement(
+                      messageStatus[
+                        contact.messages[contact.messages.length - 1]
+                          .status as keyof typeof messageStatus
+                      ]
+                    )}
+                  </span>
+                  <p className="text-gray-600 text-sm truncate">
+                    {contact.messages[contact.messages.length - 1].text}
+                  </p>
+                </div>
+              ) : (
+                <span className="text-sm">There isn't any message yet</span>
+              )}
             </div>
           </div>
         ))

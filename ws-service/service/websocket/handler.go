@@ -31,14 +31,36 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDStr := r.URL.Query().Get("user_id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		log.Println("Invalid userID:", err)
+	clientID := uuid.New().String()
+
+	fmt.Println("Headers:")
+	for key, values := range r.Header {
+		for _, value := range values {
+			fmt.Printf("%s: %s\n", key, value)
+		}
+	}
+
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		conn.WriteJSON(types.WsErrorMessageResponse{
+			ID:      clientID,
+			Message: []string{"Missing X-User-ID on headers"},
+			Status:  "missing_headers",
+		})
+		conn.Close()
 		return
 	}
 
-	clientID := uuid.New().String()
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		conn.WriteJSON(types.WsErrorMessageResponse{
+			ID:      clientID,
+			Message: []string{"Invalid X-User-ID format"},
+			Status:  "invalid_headers",
+		})
+		conn.Close()
+		return
+	}
 
 	AddUserDeviceConnection(clientID, types.Connection{
 		ClientID: clientID,

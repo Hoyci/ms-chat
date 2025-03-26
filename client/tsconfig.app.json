@@ -35,6 +35,7 @@
       "@contexts/*": ["contexts/*"],
       "@api/*": ["api/*"],
       "@store/*": ["store/*"],
+      "@services/*": ["services/*"]
     }
   },
   "include": ["src"]
