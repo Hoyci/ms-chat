@@ -1,4 +1,4 @@
-import { useContactStore } from "store/contactStore";
+import { useContactStore } from "@store/roomStore";
 import ListHeader from "./ListHeader";
 import ScrollArea from "./ScrollArea";
 

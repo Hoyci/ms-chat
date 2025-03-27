@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useContactStore } from "@store/contactStore";
+import { useContactStore } from "@store/roomStore";
 import Bottom from "./Bottom";
 import Header from "./Header";
 import ScrollArea from "./ScrollArea";

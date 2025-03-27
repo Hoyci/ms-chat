@@ -1,6 +1,6 @@
-import { IContact } from "@store/contactStore";
+import { IRoom } from "@store/roomStore";
 
-export const CONTACTS: IContact[] = [
+export const CONTACTS: IRoom[] = [
     {
         id: 1,
         name: "John Doe",
@@ -8,9 +8,10 @@ export const CONTACTS: IContact[] = [
         messages: [
             {
                 id: 1,
+                room_id: 1,
                 text: "Opa, bom dia",
                 sendId: 1,
-                timestamp: new Date().toLocaleDateString(),
+                timestamp: new Date("2025-03-20T15:58:06.024Z").toISOString(),
                 status: "delivered",
             }
         ]
@@ -22,9 +23,10 @@ export const CONTACTS: IContact[] = [
         messages: [
             {
                 id: 1,
+                room_id: 2,
                 text: "E ai, meu faixa!",
                 sendId: 1,
-                timestamp: new Date().toLocaleDateString(),
+                timestamp: new Date("2025-03-26T15:58:06.024Z").toISOString(),
                 status: "sent",
             }
         ]

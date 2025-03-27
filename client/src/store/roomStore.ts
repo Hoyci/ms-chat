@@ -2,7 +2,7 @@ import { IMessage } from "@store/message";
 import { CONTACTS } from "mocks/contacts";
 import { create } from "zustand";
 
-export type IContact = {
+export type IRoom = {
   id: number;
   name: string;
   avatar?: string | null;
@@ -10,13 +10,13 @@ export type IContact = {
 };
 
 type ContactStore = {
-  contacts: IContact[];
-  selectedContact: IContact | null;
-  setSelectedContact: (contact: IContact | null) => void;
-  addContact: (contact: IContact) => void;
+  contacts: IRoom[];
+  selectedContact: IRoom | null;
+  setSelectedContact: (contact: IRoom | null) => void;
+  addContact: (contact: IRoom) => void;
   updateContact: (
     id: number,
-    updates: Partial<IContact> | ((contact: IContact) => Partial<IContact>)
+    updates: Partial<IRoom> | ((contact: IRoom) => Partial<IRoom>)
   ) => void;
 };
 
@@ -24,7 +24,7 @@ export const useContactStore = create<ContactStore>((set) => ({
   contacts: CONTACTS,
   selectedContact: null,
   setSelectedContact: (contact) => set({ selectedContact: contact }),
-  addContact: (contact: IContact) =>
+  addContact: (contact: IRoom) =>
     set((state) => ({ contacts: [...state.contacts, contact] })),
   updateContact: (id, updates) =>
     set((state) => {

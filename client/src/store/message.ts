@@ -13,6 +13,7 @@ type StatusType = keyof typeof messageStatus;
 export type IMessage = {
   id: number;
   text: string;
+  room_id: number;
   sendId: number;
   timestamp: string;
   status: StatusType;

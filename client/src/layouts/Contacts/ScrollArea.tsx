@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import UserIcon from "@assets/user.svg?react";
-import type { IContact } from "@store/contactStore";
+import type { IRoom } from "@store/roomStore";
 import { messageStatus } from "@store/message";
+import { formatMessageDate } from "@utils/date";
 
 interface ScrollAreaProps {
-  contacts: IContact[];
-  onSelectContact: (contact: IContact) => void;
+  contacts: IRoom[];
+  onSelectContact: (contact: IRoom) => void;
 }
 
 function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
   const [localSelected, setLocalSelected] = useState<number | null>(null);
 
-  const handleSelect = (contact: IContact) => {
+  const handleSelect = (contact: IRoom) => {
     setLocalSelected(contact.id);
     onSelectContact(contact);
   };
@@ -48,7 +49,7 @@ function ScrollArea({ contacts, onSelectContact }: ScrollAreaProps) {
                 <span className="font-semibold">{contact.name}</span>
                 {contact.messages.length > 0 && (
                   <span className="text-sm text-gray-500">
-                    {contact.messages[contact.messages.length - 1].timestamp}
+                    {formatMessageDate(contact.messages[contact.messages.length - 1].timestamp)}
                   </span>
                 )}
               </div>

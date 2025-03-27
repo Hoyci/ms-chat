@@ -1,9 +1,9 @@
 import UserIcon from "@assets/user.svg?react";
 import SearchIcon from "@assets/search.svg?react";
 import MenuIcon from "@assets/menu.svg?react";
-import { IContact } from "@store/contactStore";
+import { IRoom } from "@store/roomStore";
 
-function Header({ contact, className }: { contact: IContact, className: string }) {
+function Header({ contact, className }: { contact: IRoom, className: string }) {
   return (
     <div
       className={`z-10 w-full h-16 bg-primary-100 px-4 py-2.5 flex items-center justify-between text-neutral-400 ${className}`}

@@ -1,5 +1,5 @@
 import type { IMessage } from "@store/message";
-import Message from "./message";
+import Message from "./Message";
 import chatBg from "@assets/chat-bg.png";
 
 function ScrollArea({ messages }: { messages: IMessage[] }) {
