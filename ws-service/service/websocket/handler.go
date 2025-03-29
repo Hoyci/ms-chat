@@ -91,7 +91,7 @@ func manageConnection(conn *websocket.Conn, clientID string) {
 		var msg coreTypes.Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
 				log.Printf("Connection closed by client: %v", err)
 				return
 			}

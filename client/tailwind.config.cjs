@@ -12,6 +12,7 @@ module.exports = {
           100: "#202C33", // Verde principal do WhatsApp
           200: "#2F3B43", // Verde escuro (hover/estações)
           300: "#0B141A", // Verde muito escuro (cabeçalhos)
+          400: "#182229",
         },
         secondary: {
           50: "#34B7F1", // Azul claro (links/ícones)

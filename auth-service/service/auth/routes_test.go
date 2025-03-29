@@ -166,7 +166,7 @@ func TestHandleUserLogin(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, res.StatusCode)
 
 		responseBody, _ := io.ReadAll(res.Body)
-		expected := `{"error": "No user found with email johndoe@email.com"}`
+		expected := `{"error": "Incorrect credentials. Please try again."}`
 		assert.JSONEq(t, expected, string(responseBody))
 	})
 
@@ -275,30 +275,20 @@ func TestHandleUserLogin(t *testing.T) {
 			t.Fatalf("Failed to read response body: %v", err)
 		}
 
-		var responseMap map[string]interface{}
+		var responseMap types.UserLoginResponse
 		err = json.Unmarshal(responseBody, &responseMap)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal response body: %v", err)
 		}
 
-		accessToken, ok := responseMap["access_token"].(string)
-		if !ok {
-			t.Fatalf("access_token not found or not a string")
-		}
-
-		refresh_token, ok := responseMap["refresh_token"].(string)
-		if !ok {
-			t.Fatalf("refresh_token not found or not a string")
-		}
-
-		accessTokenClaims, err := utils.VerifyJWT(accessToken, &utils.PrivateKeyAccess.PublicKey)
+		accessTokenClaims, err := utils.VerifyJWT(responseMap.AccessToken, &utils.PrivateKeyAccess.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 
 		assert.Equal(t, "johndoe@email.com", accessTokenClaims.Email, "Email claim mismatch")
 		assert.Equal(t, "JohnDoe", accessTokenClaims.Username, "Username claim mismatch")
 		assert.Equal(t, 1, accessTokenClaims.UserID, "UserID claim mismatch")
 
-		refresh_token_claims, err := utils.VerifyJWT(refresh_token, &utils.PrivateKeyRefresh.PublicKey)
+		refresh_token_claims, err := utils.VerifyJWT(responseMap.RefreshToken, &utils.PrivateKeyRefresh.PublicKey)
 		assert.NoError(t, err, "Failed to verify JWT token")
 
 		assert.Equal(t, 1, refresh_token_claims.UserID, "UserID claim mismatch")

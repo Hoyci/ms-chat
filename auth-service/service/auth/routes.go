@@ -65,7 +65,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userStore.GetByEmail(r.Context(), requestPayload.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			coreUtils.WriteError(w, http.StatusNotFound, err, "HandleUserLogin", coreTypes.NotFoundResponse{Error: fmt.Sprintf("No user found with email %s", requestPayload.Email)})
+			coreUtils.WriteError(w, http.StatusNotFound, err, "HandleUserLogin", coreTypes.NotFoundResponse{Error: "Incorrect credentials. Please try again."})
 			return
 		}
 		if err == context.Canceled {
@@ -78,7 +78,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	err = utils.CheckPassword(r.Context(), user.PasswordHash, requestPayload.Password)
 	if err != nil {
-		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "The email or password is incorrect"})
+		coreUtils.WriteError(w, http.StatusInternalServerError, err, "HandleUserLogin", coreTypes.InternalServerErrorResponse{Error: "Incorrect credentials. Please try again."})
 	}
 
 	accessToken, err := utils.CreateJWT(user.ID, user.Username, user.Email, config.Envs.AccessJWTSecret, int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, utils.PrivateKeyAccess)
@@ -121,7 +121,18 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coreUtils.WriteJSON(w, http.StatusOK, types.UserLoginResponse{AccessToken: accessToken, RefreshToken: refreshToken})
+	coreUtils.WriteJSON(w, http.StatusOK, types.UserLoginResponse{
+		User: types.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			DeletedAt: user.DeletedAt,
+		},
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
 }
 
 // @Summary Atualizar tokens (Refresh Token)
