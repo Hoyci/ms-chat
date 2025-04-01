@@ -91,7 +91,6 @@ func CreateJWT(userID int, username string, email string, secretKey string, expT
 
 func VerifyJWT(tokenString string, publicKey *rsa.PublicKey) (*types.CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &types.CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// Confirma que o método de assinatura é RSA
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

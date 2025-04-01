@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	path := fmt.Sprintf("localhost:%d", config.Envs.Port)
+	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
 	rabbitmq.Init()
 	defer rabbitmq.GetChannel().Close()

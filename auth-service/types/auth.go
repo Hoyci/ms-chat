@@ -14,7 +14,7 @@ type AuthStore interface {
 
 type CustomClaims struct {
 	ID       string `json:"id"`
-	UserID   int    `json:"userId"`
+	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	jwt.RegisteredClaims
@@ -26,8 +26,9 @@ type UserLoginPayload struct {
 }
 
 type UserLoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	User         UserResponse `json:"user"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
 }
 
 type RefreshTokenPayload struct {
