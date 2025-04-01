@@ -1,8 +1,8 @@
-import type { IMessage } from "@store/message";
 import PendingIcon from "@assets/pending.svg?react";
 import SentIcon from "@assets/sent.svg?react";
 import DeliveredIcon from "@assets/delivered.svg?react";
 import { format } from "date-fns";
+import { IMessage } from "@api/rooms/types";
 
 function Message({ message }: { message: IMessage }) {
   return (
@@ -16,7 +16,9 @@ function Message({ message }: { message: IMessage }) {
       <p className="break-words">{message.text}</p>
 
       <div className="flex justify-end items-center gap-1 mt-1">
-        <span className="text-xs opacity-80">{format(message.timestamp, "HH:mm")}</span>
+        <span className="text-xs opacity-80">
+          {format(message.timestamp, "HH:mm")}
+        </span>
 
         {message.status === "pending" ? (
           <PendingIcon className="w-3 h-3 fill-current" />

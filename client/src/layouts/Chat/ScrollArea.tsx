@@ -1,4 +1,4 @@
-import type { IMessage } from "@store/message";
+import { IMessage } from "@api/rooms/types";
 import Message from "./Message";
 import chatBg from "@assets/chat-bg.png";
 

@@ -1,17 +1,17 @@
 import { useRef } from "react";
-import { useContactStore } from "@store/roomStore";
+import { useRoomStore } from "@store/roomStore";
 import Bottom from "./Bottom";
 import Header from "./Header";
 import ScrollArea from "./ScrollArea";
 
 function Chat() {
-  const { selectedContact } = useContactStore();
+  const { selectedRoom } = useRoomStore();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  return selectedContact ? (
+  return selectedRoom ? (
     <div className="relative w-full h-full bg-primary-300 flex flex-col">
-      <Header contact={selectedContact} className="relative z-10" />
-      <ScrollArea messages={selectedContact.messages} />
+      <Header room={selectedRoom} className="relative z-10" />
+      <ScrollArea messages={selectedRoom.messages} />
       <Bottom inputRef={inputRef} />
     </div>
   ) : (

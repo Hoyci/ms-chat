@@ -1,7 +1,7 @@
 import { format, isToday, isYesterday, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export function formatMessageDate(date: string) {
+export function formatMessageDate(date: Date) {
   const messageDate = new Date(date);
 
   if (isToday(messageDate)) {

@@ -35,7 +35,6 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null });
         try {
           const data = await authService.login(payload);
-          console.log("data", data);
           set({
             user: data.user,
             accessToken: data.accessToken,

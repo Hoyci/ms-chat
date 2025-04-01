@@ -1,14 +1,14 @@
-import { useContactStore } from "@store/roomStore";
+import { useRoomStore } from "@store/roomStore";
 import ListHeader from "./ListHeader";
 import ScrollArea from "./ScrollArea";
 
 function List() {
-  const { contacts, setSelectedContact } = useContactStore();
+  const { rooms, setSelectedRoom } = useRoomStore();
 
   return (
     <div className="flex-1">
       <ListHeader />
-      <ScrollArea contacts={contacts} onSelectContact={setSelectedContact} />
+      <ScrollArea rooms={rooms} onSelectContact={setSelectedRoom} />
     </div>
   );
 }

@@ -1,47 +1,64 @@
-import { IMessage } from "@store/message";
-import { CONTACTS } from "mocks/contacts";
+import { roomsService } from "@api/rooms/service";
+import { CreateRoomPayload, IRoom } from "@api/rooms/types";
+import { AxiosError } from "axios";
+import { ROOMS } from "mocks/rooms";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-export type IRoom = {
-  id: number;
-  name: string;
-  avatar?: string | null;
-  messages: IMessage[];
-};
-
-type ContactStore = {
-  contacts: IRoom[];
-  selectedContact: IRoom | null;
-  setSelectedContact: (contact: IRoom | null) => void;
-  addContact: (contact: IRoom) => void;
-  updateContact: (
+type RoomStore = {
+  rooms: IRoom[];
+  loading: boolean;
+  error: string | null;
+  selectedRoom: IRoom | null;
+  setSelectedRoom: (room: IRoom | null) => void;
+  addRoom: (room: CreateRoomPayload) => void;
+  updateRoom: (
     id: number,
-    updates: Partial<IRoom> | ((contact: IRoom) => Partial<IRoom>)
+    updates: Partial<IRoom> | ((room: IRoom) => Partial<IRoom>)
   ) => void;
 };
 
-export const useContactStore = create<ContactStore>((set) => ({
-  contacts: CONTACTS,
-  selectedContact: null,
-  setSelectedContact: (contact) => set({ selectedContact: contact }),
-  addContact: (contact: IRoom) =>
-    set((state) => ({ contacts: [...state.contacts, contact] })),
-  updateContact: (id, updates) =>
-    set((state) => {
-      const updatedContacts = state.contacts.map((contact) =>
-        contact.id === id
-          ? {
-              ...contact,
-              ...(typeof updates === "function" ? updates(contact) : updates),
-            }
-          : contact
-      );
+export const useRoomStore = create<RoomStore>()(
+  persist(
+    (set, get) => ({
+      rooms: ROOMS,
+      loading: false,
+      error: null,
+      selectedRoom: null,
+      setSelectedRoom: (room) => set({ selectedRoom: room }),
+      addRoom: async (payload: CreateRoomPayload) => {
+        try {
+          const room = await roomsService.createRoom(payload);
+          set({ rooms: [...get().rooms, room], loading: false });
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            set({ error: error.response?.data.error, loading: false });
+          } else {
+            set({ error: "Failed to fetch contacts", loading: false });
+          }
+        }
+      },
+      updateRoom: (id, updates) =>
+        set((state) => {
+          const updatedRooms = state.rooms.map((room) =>
+            room.id === id
+              ? {
+                  ...room,
+                  ...(typeof updates === "function" ? updates(room) : updates),
+                }
+              : room
+          );
 
-      return {
-        contacts: updatedContacts,
-        selectedContact:
-          updatedContacts.find((c) => c.id === state.selectedContact?.id) ||
-          null,
-      };
+          return {
+            rooms: updatedRooms,
+            selectedRoom:
+              updatedRooms.find((c) => c.id === state.selectedRoom?.id) || null,
+          };
+        }),
     }),
-}));
+    {
+      name: "room-store",
+      partialize: (state) => ({ rooms: state.rooms }),
+    }
+  )
+);

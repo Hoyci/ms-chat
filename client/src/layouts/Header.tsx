@@ -6,44 +6,54 @@ import CommunitiesIcon from "../assets/communities.svg?react";
 import ConfigIcon from "../assets/config.svg?react";
 import UserIcon from "../assets/user.svg?react";
 import IconButton from "../components/IconButton";
-
-const allIcons = [
-  {
-    icon: MessageIcon,
-    disabled: false,
-    tooltip: "Conversas",
-  },
-  {
-    icon: StatusIcon,
-    disabled: true,
-    tooltip: "Status",
-  },
-  {
-    icon: ChannelsIcon,
-    disabled: true,
-    tooltip: "Canais",
-  },
-  {
-    icon: CommunitiesIcon,
-    disabled: true,
-    tooltip: "Comunidades",
-  },
-  {
-    icon: ConfigIcon,
-    disabled: false,
-    tooltip: "Configurações",
-  },
-  {
-    icon: UserIcon,
-    disabled: false,
-    width: "w-8",
-    height: "h-8",
-    tooltip: "Perfil",
-  },
-];
+import { useAuthStore } from "@store/authStore";
 
 function Header() {
+  const { user } = useAuthStore();
   const [selected, setSelected] = useState<number>(0);
+
+  const allIcons = [
+    {
+      icon: MessageIcon,
+      disabled: false,
+      tooltip: "Conversas",
+    },
+    {
+      icon: StatusIcon,
+      disabled: true,
+      tooltip: "Status",
+    },
+    {
+      icon: ChannelsIcon,
+      disabled: true,
+      tooltip: "Canais",
+    },
+    {
+      icon: CommunitiesIcon,
+      disabled: true,
+      tooltip: "Comunidades",
+    },
+    {
+      icon: ConfigIcon,
+      disabled: false,
+      tooltip: "Configurações",
+    },
+    {
+      icon: user?.avatar
+        ? () => (
+            <img
+              src={user.avatar}
+              className="w-8 h-8 rounded-full"
+              alt="Avatar"
+            />
+          )
+        : UserIcon,
+      disabled: false,
+      width: "w-8",
+      height: "h-8",
+      tooltip: "Perfil",
+    },
+  ];
 
   const topIcons = allIcons.slice(0, -2);
   const bottomIcons = allIcons.slice(-2);

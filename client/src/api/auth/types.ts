@@ -30,9 +30,10 @@ export const UserSchema = z.object({
   id: z.number(),
   username: z.string(),
   email: z.string(),
-  createdAt: z.string(),
-  deletedAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  avatar: z.string().url().optional(),
+  createdAt: z.date(),
+  deletedAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
 
 export const AuthResponseSchema = z.object({
