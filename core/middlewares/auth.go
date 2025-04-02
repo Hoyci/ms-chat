@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"github.com/hoyci/ms-chat/core/utils"
 )
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.Handler, publicKey *rsa.PublicKey) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -37,7 +38,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		token := parts[1]
 
-		claims, err := utils.VerifyJWT(token, &utils.PrivateKeyAccess.PublicKey)
+		claims, err := utils.VerifyJWT(token, publicKey)
 		if err != nil {
 			utils.WriteError(
 				w,

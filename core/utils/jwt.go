@@ -11,35 +11,27 @@ import (
 	"github.com/hoyci/ms-chat/core/types"
 )
 
-var (
-	PrivateKeyAccess  *rsa.PrivateKey
-	PrivateKeyRefresh *rsa.PrivateKey
-)
+func LoadRSAKey(rootPath, fileName string, isPrivate bool) (any, error) {
+	keyPath := filepath.Join(rootPath, fileName)
 
-func InitJWT(rootPath string) error {
-	pathAccess := filepath.Join(rootPath, "private_key_access.pem")
-	pathRefresh := filepath.Join(rootPath, "private_key_refresh.pem")
-
-	keyBytesAccess, err := os.ReadFile(pathAccess)
+	keyBytes, err := os.ReadFile(keyPath)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to read key file: %w", err)
 	}
 
-	keyBytesRefresh, err := os.ReadFile(pathRefresh)
-	if err != nil {
-		return err
+	if isPrivate {
+		privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
+		return privateKey, nil
 	}
 
-	PrivateKeyAccess, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytesAccess)
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(keyBytes)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to parse public key: %w", err)
 	}
-
-	PrivateKeyRefresh, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytesRefresh)
-	if err != nil {
-		return err
-	}
-	return err
+	return publicKey, nil
 }
 
 func GenerateTestPrivateToken(userID int, username, email string, privateKey *rsa.PrivateKey) string {
