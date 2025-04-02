@@ -34,7 +34,7 @@ func LoadRSAKey(rootPath, fileName string, isPrivate bool) (any, error) {
 	return publicKey, nil
 }
 
-func GenerateTestPrivateToken(userID int, username, email string, privateKey *rsa.PrivateKey) string {
+func GenerateTestPrivateToken(userID string, username, email string, privateKey *rsa.PrivateKey) string {
 	claims := types.CustomClaims{
 		ID:       "mocked-id",
 		UserID:   userID,
@@ -51,7 +51,7 @@ func GenerateTestPrivateToken(userID int, username, email string, privateKey *rs
 	return token
 }
 
-func GenerateTestPublicToken(userID int, username, email string, publicKey *rsa.PublicKey) string {
+func GenerateTestPublicToken(userID string, username, email string, publicKey *rsa.PublicKey) string {
 	claims := types.CustomClaims{
 		ID:       "mocked-id",
 		UserID:   userID,
@@ -90,7 +90,7 @@ func CreateJWTFromClaimsAndPublicKey(claims types.CustomClaims, publicKey *rsa.P
 	return signedToken, nil
 }
 
-func CreateJWT(userID int, username string, email string, secretKey string, expTimeInSeconds int64, uuidGen types.UUIDGenerator, privateKey *rsa.PrivateKey) (string, error) {
+func CreateJWT(userID string, username string, email string, secretKey string, expTimeInSeconds int64, uuidGen types.UUIDGenerator, privateKey *rsa.PrivateKey) (string, error) {
 	jti := uuidGen.New()
 
 	claims := types.CustomClaims{
