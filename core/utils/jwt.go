@@ -42,7 +42,7 @@ func InitJWT(rootPath string) error {
 	return err
 }
 
-func GenerateTestToken(userID int, username, email string, privateKey *rsa.PrivateKey) string {
+func GenerateTestPrivateToken(userID int, username, email string, privateKey *rsa.PrivateKey) string {
 	claims := types.CustomClaims{
 		ID:       "mocked-id",
 		UserID:   userID,
@@ -52,17 +52,45 @@ func GenerateTestToken(userID int, username, email string, privateKey *rsa.Priva
 			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(1 * time.Hour)},
 		},
 	}
-	token, err := CreateJWTFromClaims(claims, privateKey)
+	token, err := CreateJWTFromClaimsAndPrivateKey(claims, privateKey)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate test token: %v", err))
 	}
 	return token
 }
 
-func CreateJWTFromClaims(claims types.CustomClaims, privateKey *rsa.PrivateKey) (string, error) {
+func GenerateTestPublicToken(userID int, username, email string, publicKey *rsa.PublicKey) string {
+	claims := types.CustomClaims{
+		ID:       "mocked-id",
+		UserID:   userID,
+		Username: username,
+		Email:    email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(1 * time.Hour)},
+		},
+	}
+	token, err := CreateJWTFromClaimsAndPublicKey(claims, publicKey)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to generate test token: %v", err))
+	}
+	return token
+}
+
+func CreateJWTFromClaimsAndPrivateKey(claims types.CustomClaims, privateKey *rsa.PrivateKey) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
 	signedToken, err := token.SignedString(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error signing token: %w", err)
+	}
+
+	return signedToken, nil
+}
+
+func CreateJWTFromClaimsAndPublicKey(claims types.CustomClaims, publicKey *rsa.PublicKey) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	signedToken, err := token.SignedString(publicKey)
 	if err != nil {
 		return "", fmt.Errorf("error signing token: %w", err)
 	}
