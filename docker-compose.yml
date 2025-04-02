@@ -1,15 +1,29 @@
 services:
-  postgres:
-    container_name: postgres
+  auth-database:
+    container_name: auth-postgres
     image: bitnami/postgresql:latest
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  contacts-database:
+    container_name: contacts-postgres
+    image: bitnami/postgresql:latest
+    environment:
+      POSTGRES_USER: contacts_user
+      POSTGRES_PASSWORD: contacts_password
+      POSTGRES_DB: contacts_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - contacts-db-data:/var/lib/postgresql/data
     networks:
       - internal
 
@@ -68,8 +82,9 @@ services:
       - "8080"
     environment:
       - ROOT_PATH=/app
+      - DATABASE_URL=postgres://auth_user:auth_password@auth-database:5433/auth_db?sslmode=disable
     depends_on:
-      postgres:
+      auth-database:
         condition: service_started
     networks:
       - internal
@@ -92,6 +107,8 @@ services:
 volumes:
   db-data:
   rabbitmq_data:
+  auth-db-data:
+  contacts-db-data:
 
 networks:
   internal:

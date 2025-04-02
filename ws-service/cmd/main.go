@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
 
@@ -15,12 +16,20 @@ func main() {
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
 	rabbitmq.Init()
-	defer rabbitmq.GetChannel().Close()
+	defer func(channel *amqp.Channel) {
+		err := channel.Close()
+		if err != nil {
+
+		}
+	}(rabbitmq.GetChannel())
 
 	utils.InitValidator()
 
 	websocket.RegisterRoutes()
 
 	log.Println("Listening on:", path)
-	http.ListenAndServe(path, nil)
+	err := http.ListenAndServe(path, nil)
+	if err != nil {
+		return
+	}
 }
