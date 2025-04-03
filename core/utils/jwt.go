@@ -34,7 +34,7 @@ func LoadRSAKey(rootPath, fileName string, isPrivate bool) (any, error) {
 	return publicKey, nil
 }
 
-func GenerateTestPrivateToken(userID string, username, email string, privateKey *rsa.PrivateKey) string {
+func GenerateTestToken(userID string, username, email string, privateKey *rsa.PrivateKey) string {
 	claims := types.CustomClaims{
 		ID:       "mocked-id",
 		UserID:   userID,
@@ -44,45 +44,17 @@ func GenerateTestPrivateToken(userID string, username, email string, privateKey 
 			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(1 * time.Hour)},
 		},
 	}
-	token, err := CreateJWTFromClaimsAndPrivateKey(claims, privateKey)
+	token, err := CreateJWTTestTokenFromClaims(claims, privateKey)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate test token: %v", err))
 	}
 	return token
 }
 
-func GenerateTestPublicToken(userID string, username, email string, publicKey *rsa.PublicKey) string {
-	claims := types.CustomClaims{
-		ID:       "mocked-id",
-		UserID:   userID,
-		Username: username,
-		Email:    email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(1 * time.Hour)},
-		},
-	}
-	token, err := CreateJWTFromClaimsAndPublicKey(claims, publicKey)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to generate test token: %v", err))
-	}
-	return token
-}
-
-func CreateJWTFromClaimsAndPrivateKey(claims types.CustomClaims, privateKey *rsa.PrivateKey) (string, error) {
+func CreateJWTTestTokenFromClaims(claims types.CustomClaims, privateKey *rsa.PrivateKey) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
 	signedToken, err := token.SignedString(privateKey)
-	if err != nil {
-		return "", fmt.Errorf("error signing token: %w", err)
-	}
-
-	return signedToken, nil
-}
-
-func CreateJWTFromClaimsAndPublicKey(claims types.CustomClaims, publicKey *rsa.PublicKey) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	signedToken, err := token.SignedString(publicKey)
 	if err != nil {
 		return "", fmt.Errorf("error signing token: %w", err)
 	}
