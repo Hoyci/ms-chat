@@ -8,7 +8,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: your-dockerhub-user/api-gateway
+  IMAGE_NAME: hoyci98/api-gateway
   IMAGE_TAG: latest
 
 jobs:
