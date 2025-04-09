@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: hoyci/api-gateway:latest
+          image: hoyci98/api-gateway:latest
           ports:
             - containerPort: 80
           imagePullPolicy: Always
