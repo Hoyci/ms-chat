@@ -28,6 +28,11 @@ jobs:
       - name: Push Docker image
         run: docker push $IMAGE_NAME:$IMAGE_TAG
 
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
       - name: Sync ArgoCD
         run: |
           argocd login argocd.whoam.site --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASSWORD }} --insecure
