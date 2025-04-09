@@ -42,9 +42,13 @@ func (s *UserStore) Create(ctx context.Context, newUser types.CreateUserDatabase
 	return user, nil
 }
 
-func (s *UserStore) GetByID(ctx context.Context, userID int) (*types.UserResponse, error) {
+func (s *UserStore) GetByID(ctx context.Context, userID string) (*types.UserResponse, error) {
 	user := &types.UserResponse{}
-	err := s.db.QueryRowContext(ctx, "SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null", userID).
+	err := s.db.QueryRowContext(
+		ctx,
+		"SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null",
+		userID,
+	).
 		Scan(
 			&user.ID,
 			&user.Username,
@@ -62,7 +66,11 @@ func (s *UserStore) GetByID(ctx context.Context, userID int) (*types.UserRespons
 
 func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.GetByEmailResponse, error) {
 	user := &types.GetByEmailResponse{}
-	err := s.db.QueryRowContext(ctx, "SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null", email).
+	err := s.db.QueryRowContext(
+		ctx,
+		"SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null",
+		email,
+	).
 		Scan(
 			&user.ID,
 			&user.Username,
@@ -79,7 +87,9 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.GetByE
 	return user, nil
 }
 
-func (s *UserStore) UpdateByID(ctx context.Context, userID int, newUser types.UpdateUserPayload) (*types.UserResponse, error) {
+func (s *UserStore) UpdateByID(ctx context.Context, userID string, newUser types.UpdateUserPayload) (
+	*types.UserResponse, error,
+) {
 	query := `
 			UPDATE users SET 
 			username = $2, 
@@ -121,7 +131,7 @@ func (s *UserStore) UpdateByID(ctx context.Context, userID int, newUser types.Up
 
 var ErrUserNotFound = errors.New("user not found")
 
-func (s *UserStore) DeleteByID(ctx context.Context, userID int) error {
+func (s *UserStore) DeleteByID(ctx context.Context, userID string) error {
 	result, err := s.db.ExecContext(
 		ctx,
 		"UPDATE users SET deleted_at = $2 WHERE id = $1",
@@ -137,7 +147,7 @@ func (s *UserStore) DeleteByID(ctx context.Context, userID int) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: %d", ErrUserNotFound, userID)
+		return fmt.Errorf("%w: %s", ErrUserNotFound, userID)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/hoyci/ms-chat/contacts-service/keys"
 	"github.com/hoyci/ms-chat/contacts-service/mocks"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"net/http"
@@ -18,6 +19,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain(m *testing.M) {
+	keys.LoadTestKeys()
+	m.Run()
+}
+
+func setupAuthenticatedRequest(t *testing.T, method, url, payload, userID string) (
+	*http.Request, *httptest.ResponseRecorder,
+) {
+	token := coreUtils.GenerateTestToken(userID, "JohnDoe", "johndoe@example.com", keys.TestPrivateKey)
+	claims, err := coreUtils.VerifyJWT(token, keys.TestPublicKey)
+	if err != nil {
+		t.Fatalf("Failed to verify token: %v", err)
+	}
+
+	req := httptest.NewRequest(method, url, strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req = req.WithContext(coreUtils.SetClaimsToContext(req.Context(), claims))
+
+	w := httptest.NewRecorder()
+	return req, w
+}
+
 func TestHandleCreateContact_Success(t *testing.T) {
 	coreUtils.InitLogger()
 	ctrl := gomock.NewController(t)
@@ -28,12 +52,9 @@ func TestHandleCreateContact_Success(t *testing.T) {
 
 	contactId := uuid.New().String()
 	userID := uuid.New().String()
-
 	payload := fmt.Sprintf("{\"contact_id\": \"%s\"}", contactId)
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	mockStore.EXPECT().GetContactByOwnerID(gomock.Any(), contactId, userID).Return(nil, nil)
 	mockStore.EXPECT().CreateContact(gomock.Any(), contactId, userID)
@@ -58,7 +79,7 @@ func TestHandleCreateContact_MissingUserID(t *testing.T) {
 
 	handler.HandleCreateContact(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestHandleCreateContact_InvalidJSON(t *testing.T) {
@@ -69,11 +90,10 @@ func TestHandleCreateContact_InvalidJSON(t *testing.T) {
 	mockStore := mocks.NewMockContactStore(ctrl)
 	handler := NewContactHandler(mockStore)
 
+	userID := uuid.New().String()
 	payload := `{"contact_id":`
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", "123")
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	handler.HandleCreateContact(w, req)
 
@@ -88,11 +108,10 @@ func TestHandleCreateContact_ValidationError(t *testing.T) {
 	mockStore := mocks.NewMockContactStore(ctrl)
 	handler := NewContactHandler(mockStore)
 
+	userID := uuid.New().String()
 	payload := `{"contact_id": "456"}`
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", "123")
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	handler.HandleCreateContact(w, req)
 
@@ -109,12 +128,9 @@ func TestHandleCreateContact_ContactAlreadyExists(t *testing.T) {
 
 	contactId := uuid.New().String()
 	userID := uuid.New().String()
-
 	payload := fmt.Sprintf("{\"contact_id\": \"%s\"}", contactId)
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	mockStore.EXPECT().GetContactByOwnerID(gomock.Any(), contactId, userID).Return(
 		&types.Contact{ID: "123", OwnerID: "456"}, nil,
@@ -135,12 +151,9 @@ func TestHandleCreateContact_ContextCanceled(t *testing.T) {
 
 	contactId := uuid.New().String()
 	userID := uuid.New().String()
-
 	payload := fmt.Sprintf("{\"contact_id\": \"%s\"}", contactId)
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	mockStore.EXPECT().GetContactByOwnerID(gomock.Any(), contactId, userID).Return(nil, nil)
 	mockStore.EXPECT().CreateContact(gomock.Any(), contactId, userID).Return(nil, context.Canceled)
@@ -160,12 +173,9 @@ func TestHandleCreateContact_DatabaseError(t *testing.T) {
 
 	contactId := uuid.New().String()
 	userID := uuid.New().String()
-
 	payload := fmt.Sprintf("{\"contact_id\": \"%s\"}", contactId)
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	mockStore.EXPECT().GetContactByOwnerID(gomock.Any(), contactId, userID).Return(nil, nil)
 	mockStore.EXPECT().CreateContact(gomock.Any(), contactId, userID).Return(nil, sql.ErrConnDone)
@@ -185,12 +195,9 @@ func TestHandleCreateContact_InternalServerError(t *testing.T) {
 
 	contactId := uuid.New().String()
 	userID := uuid.New().String()
-
 	payload := fmt.Sprintf("{\"contact_id\": \"%s\"}", contactId)
-	req := httptest.NewRequest(http.MethodPost, "/contacts", strings.NewReader(payload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+
+	req, w := setupAuthenticatedRequest(t, http.MethodPost, "/contacts", payload, userID)
 
 	mockStore.EXPECT().GetContactByOwnerID(gomock.Any(), contactId, userID).Return(nil, nil)
 	mockStore.EXPECT().CreateContact(gomock.Any(), contactId, userID).Return(
@@ -211,9 +218,7 @@ func TestHandleGetContacts_Success(t *testing.T) {
 	handler := NewContactHandler(mockStore)
 
 	userID := uuid.New().String()
-	req := httptest.NewRequest(http.MethodGet, "/contacts", nil)
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+	req, w := setupAuthenticatedRequest(t, http.MethodGet, "/contacts", "", userID)
 
 	mockStore.EXPECT().GetAllContactsByOwnerID(gomock.Any(), userID).Return(
 		[]*types.Contact{
@@ -256,7 +261,7 @@ func TestHandleGetContacts_MissingUserID(t *testing.T) {
 
 	handler.HandleGetContacts(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestHandleGetContacts_ContextCanceled(t *testing.T) {
@@ -268,9 +273,7 @@ func TestHandleGetContacts_ContextCanceled(t *testing.T) {
 	handler := NewContactHandler(mockStore)
 
 	userID := uuid.New().String()
-	req := httptest.NewRequest(http.MethodGet, "/contacts", nil)
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+	req, w := setupAuthenticatedRequest(t, http.MethodGet, "/contacts", "", userID)
 
 	mockStore.EXPECT().GetAllContactsByOwnerID(gomock.Any(), userID).Return(nil, context.Canceled)
 
@@ -288,9 +291,7 @@ func TestHandleGetContacts_DatabaseError(t *testing.T) {
 	handler := NewContactHandler(mockStore)
 
 	userID := uuid.New().String()
-	req := httptest.NewRequest(http.MethodGet, "/contacts", nil)
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+	req, w := setupAuthenticatedRequest(t, http.MethodGet, "/contacts", "", userID)
 
 	mockStore.EXPECT().GetAllContactsByOwnerID(gomock.Any(), userID).Return(nil, sql.ErrConnDone)
 
@@ -308,9 +309,7 @@ func TestHandleGetContacts_InternalServerError(t *testing.T) {
 	handler := NewContactHandler(mockStore)
 
 	userID := uuid.New().String()
-	req := httptest.NewRequest(http.MethodGet, "/contacts", nil)
-	req.Header.Set("X-User-ID", userID)
-	w := httptest.NewRecorder()
+	req, w := setupAuthenticatedRequest(t, http.MethodGet, "/contacts", "", userID)
 
 	mockStore.EXPECT().GetAllContactsByOwnerID(gomock.Any(), userID).Return(
 		nil, fmt.Errorf("an unexpected error occurred"),

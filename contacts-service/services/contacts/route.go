@@ -24,11 +24,11 @@ func NewContactHandler(contactStore types.ContactStore) *ContactHandler {
 }
 
 func (h *ContactHandler) HandleCreateContact(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.Header.Get("X-User-ID")
-	if userIDStr == "" {
+	userID, ok := coreUtils.GetClaimFromContext[string](r, "UserID")
+	if !ok {
 		coreUtils.WriteError(
-			w, http.StatusBadRequest, fmt.Errorf("missinng x-user-id on headers"), "HandleCreateContact",
-			coreTypes.BadRequestResponse{Error: "Missing X-User-ID on headers"},
+			w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve userID from context"),
+			"HandleCreateContact", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"},
 		)
 		return
 	}
@@ -55,7 +55,7 @@ func (h *ContactHandler) HandleCreateContact(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	contact, _ := h.contactStore.GetContactByOwnerID(r.Context(), requestPayload.ContactID, userIDStr)
+	contact, _ := h.contactStore.GetContactByOwnerID(r.Context(), requestPayload.ContactID, userID)
 
 	if contact != nil {
 		coreUtils.WriteError(
@@ -65,7 +65,7 @@ func (h *ContactHandler) HandleCreateContact(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	contact, err := h.contactStore.CreateContact(r.Context(), requestPayload.ContactID, userIDStr)
+	contact, err := h.contactStore.CreateContact(r.Context(), requestPayload.ContactID, userID)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			coreUtils.WriteError(
@@ -97,16 +97,16 @@ func (h *ContactHandler) HandleCreateContact(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ContactHandler) HandleGetContacts(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.Header.Get("X-User-ID")
-	if userIDStr == "" {
+	userID, ok := coreUtils.GetClaimFromContext[string](r, "UserID")
+	if !ok {
 		coreUtils.WriteError(
-			w, http.StatusBadRequest, fmt.Errorf("missinng x-user-id on headers"), "HandleGetContacts",
-			coreTypes.BadRequestResponse{Error: "Missing X-User-ID on headers"},
+			w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve userID from context"),
+			"HandleGetContacts", coreTypes.InternalServerErrorResponse{Error: "An unexpected error occurred"},
 		)
 		return
 	}
 
-	contacts, err := h.contactStore.GetAllContactsByOwnerID(r.Context(), userIDStr)
+	contacts, err := h.contactStore.GetAllContactsByOwnerID(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			coreUtils.WriteError(

@@ -2,7 +2,8 @@ package api
 
 import (
 	"database/sql"
-	"log"
+	"github.com/hoyci/ms-chat/auth-service/keys"
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,20 +11,19 @@ import (
 	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
 	"github.com/hoyci/ms-chat/auth-service/service/user"
-	"github.com/hoyci/ms-chat/auth-service/utils"
-	coreUtils "github.com/hoyci/ms-chat/core/utils"
+	coreMiddlewares "github.com/hoyci/ms-chat/core/middlewares"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-type APIServer struct {
+type Server struct {
 	addr   string
 	db     *sql.DB
 	Router *mux.Router
 	Config config.Config
 }
 
-func NewApiServer(addr string, db *sql.DB) *APIServer {
-	return &APIServer{
+func NewServer(addr string, db *sql.DB) *Server {
+	return &Server{
 		addr:   addr,
 		db:     db,
 		Router: nil,
@@ -31,46 +31,53 @@ func NewApiServer(addr string, db *sql.DB) *APIServer {
 	}
 }
 
-func (s *APIServer) SetupRouter(
+func (s *Server) SetupRouter(
 	healthCheckHandler *healthcheck.HealthCheckHandler,
 	userHandler *user.UserHandler,
 	authHandler *auth.AuthHandler,
 ) *mux.Router {
-	if err := utils.InitJWT(); err != nil {
-		log.Fatal("Failed to init JWT:", err)
-	}
-
 	coreUtils.InitLogger()
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
-	subrouter.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "docs/swagger.json")
-	})
+	subrouter.HandleFunc(
+		"/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "docs/swagger.json")
+		},
+	)
 
-	subrouter.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/api/v1/swagger.json"),
-		httpSwagger.DeepLinking(true),
-		httpSwagger.DocExpansion("none"),
-		httpSwagger.DomID("swagger-ui"),
-	)).Methods(http.MethodGet)
+	subrouter.PathPrefix("/swagger/").Handler(
+		httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:8080/api/v1/swagger.json"),
+			httpSwagger.DeepLinking(true),
+			httpSwagger.DocExpansion("none"),
+			httpSwagger.DomID("swagger-ui"),
+		),
+	).Methods(http.MethodGet)
 
 	subrouter.HandleFunc("/healthcheck", healthCheckHandler.HandleHealthCheck).Methods(http.MethodGet)
 
 	subrouter.HandleFunc("/auth", authHandler.HandleUserLogin).Methods(http.MethodPost)
 	subrouter.HandleFunc("/auth/refresh", authHandler.HandleRefreshToken).Methods(http.MethodPost)
 
-	// Think about remove these authMiddlewares because the API Gateway is already authenticating the requests
 	subrouter.HandleFunc("/users", userHandler.HandleCreateUser).Methods(http.MethodPost)
-	subrouter.Handle("/users", utils.AuthMiddleware(http.HandlerFunc(userHandler.HandleGetUserByID))).Methods(http.MethodGet)
-	subrouter.Handle("/users", utils.AuthMiddleware(http.HandlerFunc(userHandler.HandleUpdateUserByID))).Methods(http.MethodPut)
-	subrouter.Handle("/users", utils.AuthMiddleware(http.HandlerFunc(userHandler.HandleDeleteUserByID))).Methods(http.MethodDelete)
+	subrouter.Handle(
+		"/users", coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleGetUserByID), keys.PublicKeyAccess),
+	).Methods(http.MethodGet)
+	subrouter.Handle(
+		"/users",
+		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleUpdateUserByID), keys.PublicKeyAccess),
+	).Methods(http.MethodPut)
+	subrouter.Handle(
+		"/users",
+		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleDeleteUserByID), keys.PublicKeyAccess),
+	).Methods(http.MethodDelete)
 
 	s.Router = router
 
 	return router
 }
 
-func (s *APIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Router.ServeHTTP(w, r)
 }

@@ -5,12 +5,14 @@ import (
 	"github.com/hoyci/ms-chat/contacts-service/cmd/api"
 	"github.com/hoyci/ms-chat/contacts-service/config"
 	"github.com/hoyci/ms-chat/contacts-service/db"
+	"github.com/hoyci/ms-chat/contacts-service/keys"
 	"github.com/hoyci/ms-chat/contacts-service/services/contacts"
 	"log"
 	"net/http"
 )
 
 func main() {
+	keys.LoadRunKeys()
 	pgStorage := db.NewPGStorage()
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 

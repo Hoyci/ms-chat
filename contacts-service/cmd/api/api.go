@@ -3,15 +3,13 @@ package api
 import (
 	"database/sql"
 	"github.com/hoyci/ms-chat/contacts-service/config"
+	"github.com/hoyci/ms-chat/contacts-service/keys"
 	"github.com/hoyci/ms-chat/contacts-service/services/contacts"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	//"github.com/hoyci/ms-chat/contacts-service/config"
-	//"github.com/hoyci/ms-chat/contacts-service/service/auth"
-	//"github.com/hoyci/ms-chat/contacts-service/service/healthcheck"
-	//"github.com/hoyci/ms-chat/contacts-service/service/user"
-	//"github.com/hoyci/ms-chat/contacts-service/utils"
+
+	coreMiddlewares "github.com/hoyci/ms-chat/core/middlewares"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -51,8 +49,19 @@ func (s *Server) SetupRouter(contactHandler *contacts.ContactHandler) *mux.Route
 			httpSwagger.DomID("swagger-ui"),
 		),
 	).Methods(http.MethodGet)
-
-	subrouter.HandleFunc("/contacts", contactHandler.HandleCreateContact).Methods(http.MethodPost)
+	
+	subrouter.Handle(
+		"/contacts", coreMiddlewares.AuthMiddleware(
+			http.HandlerFunc(contactHandler.HandleCreateContact),
+			keys.PublicKeyAccess,
+		),
+	).Methods(http.MethodPost)
+	subrouter.Handle(
+		"/contacts", coreMiddlewares.AuthMiddleware(
+			http.HandlerFunc(contactHandler.HandleGetContacts),
+			keys.PublicKeyAccess,
+		),
+	).Methods(http.MethodGet)
 
 	s.Router = router
 

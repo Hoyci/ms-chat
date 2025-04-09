@@ -3,6 +3,9 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	coreTypes "github.com/hoyci/ms-chat/core/types"
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"regexp"
 	"testing"
 	"time"
@@ -10,7 +13,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hoyci/ms-chat/auth-service/types"
-	"github.com/hoyci/ms-chat/auth-service/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,49 +30,56 @@ func TestCreateUser(t *testing.T) {
 		PasswordHash: "2345678",
 	}
 
-	t.Run("database connection error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at, deleted_at")).
-			WithArgs(user.Username, user.Email, user.PasswordHash).
-			WillReturnError(sql.ErrConnDone)
+	t.Run(
+		"database connection error", func(t *testing.T) {
+			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at, deleted_at")).
+				WithArgs(user.Username, user.Email, user.PasswordHash).
+				WillReturnError(sql.ErrConnDone)
 
-		id, err := store.Create(context.Background(), user)
+			id, err := store.Create(context.Background(), user)
 
-		assert.Error(t, err)
-		assert.Zero(t, id)
-		assert.Equal(t, err, sql.ErrConnDone)
+			assert.Error(t, err)
+			assert.Zero(t, id)
+			assert.Equal(t, err, sql.ErrConnDone)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("successfully create user", func(t *testing.T) {
-		mockedDate := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at, deleted_at")).
-			WithArgs(user.Username, user.Email, user.PasswordHash).
-			WillReturnRows(
-				sqlmock.NewRows([]string{
-					"id", "username", "email", "created_at", "updated_at", "deleted_at",
-				}).AddRow(
-					1,
-					"JohnDoe",
-					"johndoe@email.com",
-					mockedDate,
-					nil,
-					nil,
-				))
+	t.Run(
+		"successfully create user", func(t *testing.T) {
+			mockedDate := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
+			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at, deleted_at")).
+				WithArgs(user.Username, user.Email, user.PasswordHash).
+				WillReturnRows(
+					sqlmock.NewRows(
+						[]string{
+							"id", "username", "email", "created_at", "updated_at", "deleted_at",
+						},
+					).AddRow(
+						1,
+						"JohnDoe",
+						"johndoe@email.com",
+						mockedDate,
+						nil,
+						nil,
+					),
+				)
 
-		newUser, err := store.Create(context.Background(), user)
+			newUser, err := store.Create(context.Background(), user)
 
-		assert.NoError(t, err)
-		assert.Equal(t, 1, newUser.ID)
-		assert.Equal(t, user.Username, newUser.Username)
-		assert.Equal(t, user.Email, newUser.Email)
+			assert.NoError(t, err)
+			assert.Equal(t, "1", newUser.ID)
+			assert.Equal(t, user.Username, newUser.Username)
+			assert.Equal(t, user.Email, newUser.Email)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 }
 
 func TestGetUserByID(t *testing.T) {
@@ -82,90 +91,104 @@ func TestGetUserByID(t *testing.T) {
 
 	store := NewUserStore(db)
 
-	ctx := utils.SetClaimsToContext(context.Background(), &types.CustomClaims{
-		ID:               "ID-CRAZY",
-		UserID:           1,
-		Username:         "johndoe",
-		Email:            "johndoe@email.com",
-		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-	})
-
-	t.Run("context canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		ctx = utils.SetClaimsToContext(ctx, &types.CustomClaims{
+	ctx := coreUtils.SetClaimsToContext(
+		context.Background(), &coreTypes.CustomClaims{
 			ID:               "ID-CRAZY",
-			UserID:           1,
-			Username:         "johndoe",
+			UserID:           "1",
+			Username:         "JohnDoe",
 			Email:            "johndoe@email.com",
 			RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-		})
+		},
+	)
 
-		user, err := store.GetByID(ctx, 1)
+	t.Run(
+		"context canceled", func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, context.Canceled)
-		assert.Nil(t, user)
+			ctx = coreUtils.SetClaimsToContext(
+				ctx, &coreTypes.CustomClaims{
+					ID:               "ID-CRAZY",
+					UserID:           "1",
+					Username:         "JohnDoe",
+					Email:            "johndoe@email.com",
+					RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
+				},
+			)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			user, err := store.GetByID(ctx, "1")
 
-	t.Run("database did not find any row", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
-			WithArgs(1).
-			WillReturnError(sql.ErrNoRows)
+			assert.Error(t, err)
+			assert.ErrorIs(t, err, context.Canceled)
+			assert.Nil(t, user)
 
-		user, err := store.GetByID(ctx, 1)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-		assert.Nil(t, user)
-		assert.Error(t, err)
-		assert.Equal(t, err, sql.ErrNoRows)
+	t.Run(
+		"database did not find any row", func(t *testing.T) {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
+				WithArgs("1").
+				WillReturnError(sql.ErrNoRows)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			user, err := store.GetByID(ctx, "1")
 
-	t.Run("database connection error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
-			WithArgs(1).
-			WillReturnError(sql.ErrConnDone)
+			assert.Nil(t, user)
+			assert.Error(t, err)
+			assert.Equal(t, err, sql.ErrNoRows)
 
-		user, err := store.GetByID(ctx, 1)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-		assert.Error(t, err)
-		assert.Zero(t, user)
-		assert.Equal(t, err, sql.ErrConnDone)
+	t.Run(
+		"database connection error", func(t *testing.T) {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
+				WithArgs("1").
+				WillReturnError(sql.ErrConnDone)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			user, err := store.GetByID(ctx, "1")
 
-	t.Run("successfully get user by ID", func(t *testing.T) {
-		expectedCreatedAt := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
+			assert.Error(t, err)
+			assert.Zero(t, user)
+			assert.Equal(t, err, sql.ErrConnDone)
 
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
-			WithArgs(1).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "created_at", "updated_at", "deleted_at"}).
-				AddRow(1, "johndoe", "johndoe@email.com", expectedCreatedAt, nil, nil))
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-		user, err := store.GetByID(ctx, 1)
+	t.Run(
+		"successfully get user by ID", func(t *testing.T) {
+			expectedCreatedAt := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, user)
-		assert.Equal(t, 1, user.ID)
-		assert.Equal(t, "johndoe", user.Username)
-		assert.Equal(t, "johndoe@email.com", user.Email)
-		assert.Equal(t, expectedCreatedAt, user.CreatedAt)
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, created_at, updated_at, deleted_at  FROM users WHERE id = $1 AND deleted_at IS null")).
+				WithArgs("1").
+				WillReturnRows(
+					sqlmock.NewRows([]string{"id", "username", "email", "created_at", "updated_at", "deleted_at"}).
+						AddRow(1, "johndoe", "johndoe@email.com", expectedCreatedAt, nil, nil),
+				)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			user, err := store.GetByID(ctx, "1")
+
+			assert.NoError(t, err)
+			assert.NotNil(t, user)
+			assert.Equal(t, "1", user.ID)
+			assert.Equal(t, "johndoe", user.Username)
+			assert.Equal(t, "johndoe@email.com", user.Email)
+			assert.Equal(t, expectedCreatedAt, user.CreatedAt)
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 }
 
 func TestGetUserByEmail(t *testing.T) {
@@ -177,76 +200,90 @@ func TestGetUserByEmail(t *testing.T) {
 
 	store := NewUserStore(db)
 
-	t.Run("context canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
+	t.Run(
+		"context canceled", func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-		user, err := store.GetByEmail(ctx, "johndoe@email.com")
+			user, err := store.GetByEmail(ctx, "johndoe@email.com")
 
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, context.Canceled)
-		assert.Nil(t, user)
+			assert.Error(t, err)
+			assert.ErrorIs(t, err, context.Canceled)
+			assert.Nil(t, user)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("database did not find any row", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null")).
-			WithArgs("johndoe@email.com").
-			WillReturnError(sql.ErrNoRows)
+	t.Run(
+		"database did not find any row", func(t *testing.T) {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null")).
+				WithArgs("johndoe@email.com").
+				WillReturnError(sql.ErrNoRows)
 
-		user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
+			user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
 
-		assert.Nil(t, user)
-		assert.Error(t, err)
-		assert.Equal(t, err, sql.ErrNoRows)
+			assert.Nil(t, user)
+			assert.Error(t, err)
+			assert.Equal(t, err, sql.ErrNoRows)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("database connection error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null")).
-			WithArgs("johndoe@email.com").
-			WillReturnError(sql.ErrConnDone)
+	t.Run(
+		"database connection error", func(t *testing.T) {
+			mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS null")).
+				WithArgs("johndoe@email.com").
+				WillReturnError(sql.ErrConnDone)
 
-		user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
+			user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
 
-		assert.Error(t, err)
-		assert.Zero(t, user)
-		assert.Equal(t, err, sql.ErrConnDone)
+			assert.Error(t, err)
+			assert.Zero(t, user)
+			assert.Equal(t, err, sql.ErrConnDone)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("successfully get user by ID", func(t *testing.T) {
-		expectedCreatedAt := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
+	t.Run(
+		"successfully get user by ID", func(t *testing.T) {
+			expectedCreatedAt := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
 
-		mock.ExpectQuery("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = \\$1 AND deleted_at IS null").
-			WithArgs("johndoe@email.com").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "username", "email", "password_hash", "created_at", "updated_at", "deleted_at"}).
-				AddRow(1, "johndoe", "johndoe@email.com", "AHASHEDPASSWORD", expectedCreatedAt, nil, nil))
+			mock.ExpectQuery("SELECT id, username, email, password_hash, created_at, updated_at, deleted_at FROM users WHERE email = \\$1 AND deleted_at IS null").
+				WithArgs("johndoe@email.com").
+				WillReturnRows(
+					sqlmock.NewRows(
+						[]string{
+							"id", "username", "email", "password_hash", "created_at", "updated_at", "deleted_at",
+						},
+					).
+						AddRow("1", "johndoe", "johndoe@email.com", "AHASHEDPASSWORD", expectedCreatedAt, nil, nil),
+				)
 
-		expectedID := 1
+			expectedID := "1"
 
-		user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
+			user, err := store.GetByEmail(context.Background(), "johndoe@email.com")
 
-		assert.NoError(t, err)
-		assert.NotNil(t, user)
-		assert.Equal(t, expectedID, user.ID)
-		assert.Equal(t, "johndoe", user.Username)
-		assert.Equal(t, "johndoe@email.com", user.Email)
-		assert.Equal(t, expectedCreatedAt, user.CreatedAt)
+			assert.NoError(t, err)
+			assert.NotNil(t, user)
+			assert.Equal(t, expectedID, user.ID)
+			assert.Equal(t, "johndoe", user.Username)
+			assert.Equal(t, "johndoe@email.com", user.Email)
+			assert.Equal(t, expectedCreatedAt, user.CreatedAt)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 }
 
 func TestUpdateByID(t *testing.T) {
@@ -258,41 +295,52 @@ func TestUpdateByID(t *testing.T) {
 
 	store := NewUserStore(db)
 
-	ctx := utils.SetClaimsToContext(context.Background(), &types.CustomClaims{
-		ID:               "ID-CRAZY",
-		UserID:           1,
-		Username:         "johndoe",
-		Email:            "johndoe@email.com",
-		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-	})
-
-	t.Run("context canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		ctx = utils.SetClaimsToContext(ctx, &types.CustomClaims{
+	ctx := coreUtils.SetClaimsToContext(
+		context.Background(), &coreTypes.CustomClaims{
 			ID:               "ID-CRAZY",
-			UserID:           1,
-			Username:         "johndoe",
+			UserID:           "1",
+			Username:         "JohnDoe",
 			Email:            "johndoe@email.com",
 			RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-		})
+		},
+	)
 
-		updatedUser, err := store.UpdateByID(ctx, 1, types.UpdateUserPayload{
-			Username: "Updated Username",
-			Email:    "Updated Email",
-		})
+	t.Run(
+		"context canceled", func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, context.Canceled)
-		assert.Nil(t, updatedUser)
+			ctx = coreUtils.SetClaimsToContext(
+				ctx, &coreTypes.CustomClaims{
+					ID:               "ID-CRAZY",
+					UserID:           "1",
+					Username:         "JohnnDoe",
+					Email:            "johndoe@email.com",
+					RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
+				},
+			)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+			updatedUser, err := store.UpdateByID(
+				ctx, "1", types.UpdateUserPayload{
+					Username: "Updated Username",
+					Email:    "Updated Email",
+				},
+			)
 
-	t.Run("database did not find any row", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`
+			assert.Error(t, err)
+			assert.ErrorIs(t, err, context.Canceled)
+			assert.Nil(t, updatedUser)
+
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
+		},
+	)
+
+	t.Run(
+		"database did not find any row", func(t *testing.T) {
+			mock.ExpectQuery(
+				regexp.QuoteMeta(
+					`
 			UPDATE users SET 
 			username = $2, 
 			email = $3,
@@ -305,31 +353,39 @@ func TestUpdateByID(t *testing.T) {
 				created_at, 
 				deleted_at,
 				updated_at;
-			`)).
-			WithArgs(
-				1,
-				"Updated Username",
-				"Updated Email",
-				time.Now(),
+			`,
+				),
 			).
-			WillReturnError(sql.ErrNoRows)
+				WithArgs(
+					"1",
+					"Updated Username",
+					"Updated Email",
+					time.Now(),
+				).
+				WillReturnError(sql.ErrNoRows)
 
-		id, err := store.UpdateByID(ctx, 1, types.UpdateUserPayload{
-			Username: "Updated Username",
-			Email:    "Updated Email",
-		})
+			id, err := store.UpdateByID(
+				ctx, "1", types.UpdateUserPayload{
+					Username: "Updated Username",
+					Email:    "Updated Email",
+				},
+			)
 
-		assert.Nil(t, id)
-		assert.Error(t, err)
-		assert.Equal(t, err, sql.ErrNoRows)
+			assert.Nil(t, id)
+			assert.Error(t, err)
+			assert.Equal(t, err, sql.ErrNoRows)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("database connection error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`
+	t.Run(
+		"database connection error", func(t *testing.T) {
+			mock.ExpectQuery(
+				regexp.QuoteMeta(
+					`
 			UPDATE users SET 
 			username = $2, 
 			email = $3,
@@ -342,32 +398,40 @@ func TestUpdateByID(t *testing.T) {
 				created_at, 
 				deleted_at,
 				updated_at;
-			`)).
-			WithArgs(
-				1,
-				"Updated Username",
-				"Updated Email",
-				time.Now(),
+			`,
+				),
 			).
-			WillReturnError(sql.ErrConnDone)
+				WithArgs(
+					"1",
+					"Updated Username",
+					"Updated Email",
+					time.Now(),
+				).
+				WillReturnError(sql.ErrConnDone)
 
-		id, err := store.UpdateByID(ctx, 1, types.UpdateUserPayload{
-			Username: "Updated Username",
-			Email:    "Updated Email",
-		})
+			id, err := store.UpdateByID(
+				ctx, "1", types.UpdateUserPayload{
+					Username: "Updated Username",
+					Email:    "Updated Email",
+				},
+			)
 
-		assert.Error(t, err)
-		assert.Zero(t, id)
-		assert.Equal(t, err, sql.ErrConnDone)
+			assert.Error(t, err)
+			assert.Zero(t, id)
+			assert.Equal(t, err, sql.ErrConnDone)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-	t.Run("successfully update user", func(t *testing.T) {
-		mockedDate := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
-		mock.ExpectQuery(regexp.QuoteMeta(`
+	t.Run(
+		"successfully update user", func(t *testing.T) {
+			mockedDate := time.Date(0001, 1, 1, 0, 0, 0, 0, time.UTC)
+			mock.ExpectQuery(
+				regexp.QuoteMeta(
+					`
 			UPDATE users SET 
 			username = $2, 
 			email = $3,
@@ -380,41 +444,50 @@ func TestUpdateByID(t *testing.T) {
 				created_at, 
 				deleted_at,
 				updated_at;
-			`)).
-			WithArgs(
-				1,
-				"Updated Username",
-				"Updated Email",
-				time.Now(),
+			`,
+				),
 			).
-			WillReturnRows(sqlmock.NewRows([]string{
-				"id", "username", "email", "created_at", "deleted_at", "updated_at",
-			}).AddRow(
-				1,
-				"Updated Username",
-				"Updated Email",
-				mockedDate,
-				nil,
-				&mockedDate,
-			))
+				WithArgs(
+					"1",
+					"Updated Username",
+					"Updated Email",
+					time.Now(),
+				).
+				WillReturnRows(
+					sqlmock.NewRows(
+						[]string{
+							"id", "username", "email", "created_at", "deleted_at", "updated_at",
+						},
+					).AddRow(
+						"1",
+						"Updated Username",
+						"Updated Email",
+						mockedDate,
+						nil,
+						&mockedDate,
+					),
+				)
 
-		updatedUser, err := store.UpdateByID(ctx, 1, types.UpdateUserPayload{
-			Username: "Updated Username",
-			Email:    "Updated Email",
-		})
+			updatedUser, err := store.UpdateByID(
+				ctx, "1", types.UpdateUserPayload{
+					Username: "Updated Username",
+					Email:    "Updated Email",
+				},
+			)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, updatedUser)
-		assert.Equal(t, 1, updatedUser.ID)
-		assert.Equal(t, "Updated Username", updatedUser.Username)
-		assert.Equal(t, "Updated Email", updatedUser.Email)
-		assert.Equal(t, mockedDate, updatedUser.CreatedAt)
-		assert.Nil(t, updatedUser.DeletedAt)
-		assert.Equal(t, &mockedDate, updatedUser.UpdatedAt)
+			assert.NoError(t, err)
+			assert.NotNil(t, updatedUser)
+			assert.Equal(t, "1", updatedUser.ID)
+			assert.Equal(t, "Updated Username", updatedUser.Username)
+			assert.Equal(t, "Updated Email", updatedUser.Email)
+			assert.Equal(t, mockedDate, updatedUser.CreatedAt)
+			assert.Nil(t, updatedUser.DeletedAt)
+			assert.Equal(t, &mockedDate, updatedUser.UpdatedAt)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
+		},
+	)
 }
 
 func TestDeleteByID(t *testing.T) {
@@ -426,77 +499,123 @@ func TestDeleteByID(t *testing.T) {
 
 	store := NewUserStore(db)
 
-	ctx := utils.SetClaimsToContext(context.Background(), &types.CustomClaims{
-		ID:               "ID-CRAZY",
-		UserID:           1,
-		Username:         "johndoe",
-		Email:            "johndoe@email.com",
-		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-	})
-
-	t.Run("context canceled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		ctx = utils.SetClaimsToContext(ctx, &types.CustomClaims{
+	ctx := coreUtils.SetClaimsToContext(
+		context.Background(), &coreTypes.CustomClaims{
 			ID:               "ID-CRAZY",
-			UserID:           1,
-			Username:         "johndoe",
+			UserID:           "1",
+			Username:         "JohnnDoe",
 			Email:            "johndoe@email.com",
 			RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
-		})
+		},
+	)
 
-		err := store.DeleteByID(ctx, 1)
+	t.Run(
+		"context canceled", func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, context.Canceled)
+			ctx = coreUtils.SetClaimsToContext(
+				ctx, &coreTypes.CustomClaims{
+					ID:               "ID-CRAZY",
+					UserID:           "1",
+					Username:         "JohnnDoe",
+					Email:            "johndoe@email.com",
+					RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24))},
+				},
+			)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+			err := store.DeleteByID(ctx, "1")
 
-	t.Run("database did not find any row", func(t *testing.T) {
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
-			WithArgs(1, sqlmock.AnyArg()).
-			WillReturnError(ErrUserNotFound)
+			assert.Error(t, err)
+			assert.ErrorIs(t, err, context.Canceled)
 
-		err := store.DeleteByID(ctx, 1)
+			err = mock.ExpectationsWereMet()
+			assert.NoError(t, err)
+		},
+	)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "user not found")
-		assert.ErrorIs(t, err, ErrUserNotFound)
+	t.Run(
+		"database did not find any row", func(t *testing.T) {
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
+				WithArgs("1", sqlmock.AnyArg()).
+				WillReturnError(ErrUserNotFound)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			err := store.DeleteByID(ctx, "1")
 
-	t.Run("database connection error", func(t *testing.T) {
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
-			WithArgs(1, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrConnDone)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, "user not found")
+			assert.ErrorIs(t, err, ErrUserNotFound)
 
-		err := store.DeleteByID(ctx, 1)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-		assert.Error(t, err)
-		assert.Equal(t, err, sql.ErrConnDone)
+	t.Run(
+		"database connection error", func(t *testing.T) {
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
+				WithArgs("1", sqlmock.AnyArg()).
+				WillReturnError(sql.ErrConnDone)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			err := store.DeleteByID(ctx, "1")
 
-	t.Run("successfully delete user by ID", func(t *testing.T) {
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
-			WithArgs(1, sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+			assert.Error(t, err)
+			assert.Equal(t, err, sql.ErrConnDone)
 
-		err := store.DeleteByID(ctx, 1)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 
-		assert.NoError(t, err)
+	t.Run(
+		"user not found", func(t *testing.T) {
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
+				WithArgs("1", sqlmock.AnyArg()).
+				WillReturnResult(sqlmock.NewResult(0, 0))
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unmet expectations: %v", err)
-		}
-	})
+			err = store.DeleteByID(ctx, "1")
+
+			assert.Error(t, err)
+			assert.ErrorIs(t, err, ErrUserNotFound)
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
+
+	t.Run(
+		"error getting rows affected", func(t *testing.T) {
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
+				WithArgs("1", sqlmock.AnyArg()).
+				WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("some error")))
+
+			err := store.DeleteByID(ctx, "1")
+
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), "some error")
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
+
+	t.Run(
+		"successfully delete user by ID", func(t *testing.T) {
+			mock.ExpectExec(regexp.QuoteMeta("UPDATE users SET deleted_at = $2 WHERE id = $1")).
+				WithArgs("1", sqlmock.AnyArg()).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			err := store.DeleteByID(ctx, "1")
+
+			assert.NoError(t, err)
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet expectations: %v", err)
+			}
+		},
+	)
 }

@@ -15,7 +15,7 @@ func NewAuthStore(db *sql.DB) *AuthStore {
 	return &AuthStore{db: db}
 }
 
-func (s *AuthStore) GetRefreshTokenByUserID(ctx context.Context, userID int) (*types.RefreshToken, error) {
+func (s *AuthStore) GetRefreshTokenByUserID(ctx context.Context, userID string) (*types.RefreshToken, error) {
 	token := &types.RefreshToken{}
 
 	err := s.db.QueryRowContext(ctx, "SELECT * FROM refresh_tokens WHERE user_id = $1", userID).

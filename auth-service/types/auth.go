@@ -3,21 +3,11 @@ package types
 import (
 	"context"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthStore interface {
-	GetRefreshTokenByUserID(ctx context.Context, userID int) (*RefreshToken, error)
+	GetRefreshTokenByUserID(ctx context.Context, userID string) (*RefreshToken, error)
 	UpsertRefreshToken(ctx context.Context, payload UpdateRefreshTokenPayload) error
-}
-
-type CustomClaims struct {
-	ID       string `json:"id"`
-	UserID   int    `json:"user_id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	jwt.RegisteredClaims
 }
 
 type UserLoginPayload struct {
@@ -37,14 +27,14 @@ type RefreshTokenPayload struct {
 
 type RefreshToken struct {
 	ID        int       `db:"id"`
-	UserID    int       `db:"user_id"`
+	UserID    string    `db:"user_id"`
 	Jti       string    `db:"jti"`
 	ExpiresAt time.Time `db:"expires_at"`
 	CreatedAt time.Time `db:"created_at"`
 }
 
 type UpdateRefreshTokenPayload struct {
-	UserID    int       `db:"user_id"`
+	UserID    string    `db:"user_id"`
 	Jti       string    `db:"jti"`
 	ExpiresAt time.Time `db:"expires_at"`
 }

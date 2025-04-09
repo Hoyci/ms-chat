@@ -11,7 +11,7 @@ type MockAuthStore struct {
 	mock.Mock
 }
 
-func (m *MockAuthStore) GetRefreshTokenByUserID(ctx context.Context, userID int) (*types.RefreshToken, error) {
+func (m *MockAuthStore) GetRefreshTokenByUserID(ctx context.Context, userID string) (*types.RefreshToken, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(*types.RefreshToken), args.Error(1)
 }

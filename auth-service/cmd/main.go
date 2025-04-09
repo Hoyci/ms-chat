@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/hoyci/ms-chat/auth-service/keys"
+	"github.com/hoyci/ms-chat/auth-service/service/crypt"
+	"github.com/hoyci/ms-chat/auth-service/utils"
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"log"
 	"net/http"
 
@@ -11,10 +15,9 @@ import (
 	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/service/healthcheck"
 	"github.com/hoyci/ms-chat/auth-service/service/user"
-	"github.com/hoyci/ms-chat/auth-service/utils"
 )
 
-// @title Auth Service API dwada
+// @title Auth Service API
 // @version 1.0
 // @description API para gestão de usuário e autenticação
 // @host localhost:8080
@@ -23,22 +26,28 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	db := db.NewPGStorage()
+	keys.LoadRunKeys()
+	pgStorage := db.NewPGStorage()
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 
-	apiServer := api.NewApiServer(path, db)
+	apiServer := api.NewServer(path, pgStorage)
 
 	healthCheckHandler := healthcheck.NewHealthCheckHandler(config.Envs)
 
-	userStore := user.NewUserStore(db)
-	userHandler := user.NewUserHandler(userStore)
+	userStore := user.NewUserStore(pgStorage)
+	passwordStore := &crypt.BcryptPasswordStore{}
+	passwordHandler := crypt.PasswordHandler(passwordStore)
+	userHandler := user.NewUserHandler(userStore, passwordHandler)
 
-	authStore := auth.NewAuthStore(db)
-	uuidGen := &utils.UUIDGeneratorUtil{}
-	authHandler := auth.NewAuthHandler(userStore, authStore, uuidGen)
+	authStore := auth.NewAuthStore(pgStorage)
+	uuidGen := &coreUtils.UUIDGeneratorUtil{}
+	authHandler := auth.NewAuthHandler(userStore, authStore, uuidGen, passwordHandler)
 
 	apiServer.SetupRouter(healthCheckHandler, userHandler, authHandler)
 
 	log.Println("Listening on:", path)
-	http.ListenAndServe(path, apiServer.Router)
+	err := http.ListenAndServe(path, apiServer.Router)
+	if err != nil {
+		log.Panic("Failed to start server: " + err.Error())
+	}
 }

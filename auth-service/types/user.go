@@ -7,14 +7,14 @@ import (
 
 type UserStore interface {
 	Create(ctx context.Context, user CreateUserDatabasePayload) (*UserResponse, error)
-	GetByID(ctx context.Context, userID int) (*UserResponse, error)
+	GetByID(ctx context.Context, userID string) (*UserResponse, error)
 	GetByEmail(ctx context.Context, email string) (*GetByEmailResponse, error)
-	UpdateByID(ctx context.Context, userID int, user UpdateUserPayload) (*UserResponse, error)
-	DeleteByID(ctx context.Context, userID int) error
+	UpdateByID(ctx context.Context, userID string, user UpdateUserPayload) (*UserResponse, error)
+	DeleteByID(ctx context.Context, userID string) error
 }
 
 type User struct {
-	ID           int        `json:"id"`
+	ID           string     `json:"id"`
 	Username     string     `json:"username"`
 	Email        string     `json:"email"`
 	PasswordHash string     `json:"passwordHash"`
@@ -24,7 +24,7 @@ type User struct {
 }
 
 type GetByEmailResponse struct {
-	ID           int        `json:"id"`
+	ID           string     `json:"id"`
 	Username     string     `json:"username"`
 	Email        string     `json:"email"`
 	PasswordHash string     `json:"passwordHash"`
@@ -34,7 +34,7 @@ type GetByEmailResponse struct {
 }
 
 type UserResponse struct {
-	ID        int        `json:"id"`
+	ID        string     `json:"id"`
 	Username  string     `json:"username"`
 	Email     string     `json:"email"`
 	CreatedAt time.Time  `json:"createdAt"`
@@ -65,5 +65,5 @@ type UpdateUserPayload struct {
 }
 
 type DeleteUserByIDResponse struct {
-	ID int `json:"id"`
+	ID string `json:"id"`
 }

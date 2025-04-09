@@ -7,7 +7,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/gorilla/mux v1.8.1
-	github.com/hoyci/ms-chat/core v0.0.0-20250302175203-a4f3d8f8c32a
+	github.com/hoyci/ms-chat/core v0.0.0-20250403000725-cfa4bfe08ced
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/http-swagger v1.3.4
 	golang.org/x/crypto v0.33.0
@@ -35,7 +35,7 @@ require (
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/uuid v1.6.0
 	github.com/josharian/intern v1.0.0 // indirect

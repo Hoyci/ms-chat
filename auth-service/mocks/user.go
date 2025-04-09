@@ -16,7 +16,7 @@ func (m *MockUserStore) Create(ctx context.Context, user types.CreateUserDatabas
 	return args.Get(0).(*types.UserResponse), args.Error(1)
 }
 
-func (m *MockUserStore) GetByID(ctx context.Context, userID int) (*types.UserResponse, error) {
+func (m *MockUserStore) GetByID(ctx context.Context, userID string) (*types.UserResponse, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(*types.UserResponse), args.Error(1)
 }
@@ -26,12 +26,14 @@ func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*types.Ge
 	return args.Get(0).(*types.GetByEmailResponse), args.Error(1)
 }
 
-func (m *MockUserStore) UpdateByID(ctx context.Context, userID int, newUser types.UpdateUserPayload) (*types.UserResponse, error) {
-	args := m.Called(ctx)
+func (m *MockUserStore) UpdateByID(
+	ctx context.Context, userID string, newUser types.UpdateUserPayload,
+) (*types.UserResponse, error) {
+	args := m.Called(ctx, userID, newUser)
 	return args.Get(0).(*types.UserResponse), args.Error(1)
 }
 
-func (m *MockUserStore) DeleteByID(ctx context.Context, userID int) error {
+func (m *MockUserStore) DeleteByID(ctx context.Context, userID string) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
 }
