@@ -1,10 +1,9 @@
-
 server:
   dev:
     enabled: false
   ha:
     enabled: true
-    replicas: 3
+    replicas: 1
   auditStorage:
     enabled: true
   storage:
@@ -14,7 +13,7 @@ server:
       config: |
         ui = true
         listener "tcp" {
-          tls_disable = 0    
+          tls_disable = 0
           address = "[::]:8200"
           cluster_address = "[::]:8201"
           tls_cert_file = "/vault/certs/tls.crt"
@@ -22,27 +21,8 @@ server:
         }
         storage "raft" {
           path = "/vault/data"
-          node_id = "vault-{{ pod }}"  # Usa o nome do Pod como node_id
+          node_id = "vault-{{ pod }}"
         }
         service_registration "kubernetes" {}
-
-resources:
-  requests:
-    memory: "512Mi"
-    cpu: "200m"
-  limits:
-    memory: "1Gi"
-    cpu: "500m"
-
 ui:
   enabled: true
-  service:
-    type: ClusterIP
-
-auth:
-  - type: kubernetes
-    roles:
-      - name: default
-        bound_service_account_names: "*"
-        bound_service_account_namespaces: "*"
-        policies: default
