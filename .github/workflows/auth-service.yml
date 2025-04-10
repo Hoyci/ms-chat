@@ -1,14 +1,14 @@
-name: Deploy API Gateway
+name: Deploy Auth Service
 
 on:
   push:
     paths:
-      - 'api-gateway/**'
+      - 'auth-service/**'
     branches:
       - main
 
 env:
-  IMAGE_NAME: hoyci98/api-gateway
+  IMAGE_NAME: hoyci98/auth-service
 
 jobs:
   build-and-deploy:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest ./api-gateway
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest ./auth-service
 
       - name: Push Docker image with hash tag
         run: docker push $IMAGE_NAME:$IMAGE_TAG
@@ -42,4 +42,4 @@ jobs:
       - name: Sync ArgoCD
         run: |
           argocd login argocd.whoam.site --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASSWORD }} --insecure
-          argocd app sync api-gateway-app
+          argocd app sync auth-service-app
