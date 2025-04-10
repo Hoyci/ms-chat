@@ -8,15 +8,10 @@ spec:
   source:
     repoURL: https://helm.releases.hashicorp.com
     chart: vault
-    targetRevision: 0.30.0
+    targetRevision: 0.27.0
     helm:
-      parameters:
-        - name: server.ha.enabled
-          value: "false"
-        - name: server.dataStorage.enabled
-          value: "true"
-        - name: server.dataStorage.size
-          value: "1Gi"
+      valueFiles:
+        - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: vault
@@ -24,3 +19,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
