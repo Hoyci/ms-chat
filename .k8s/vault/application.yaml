@@ -10,8 +10,13 @@ spec:
     chart: vault
     targetRevision: 0.30.0
     helm:
-      valueFiles:
-        - helm-values.yaml
+      parameters:
+        - name: server.ha.enabled
+          value: "false"
+        - name: server.dataStorage.enabled
+          value: "true"
+        - name: server.dataStorage.size
+          value: "1Gi"
   destination:
     server: https://kubernetes.default.svc
     namespace: vault

@@ -1,6 +1,0 @@
-server:
-  ha:
-    enabled: false
-  dataStorage:
-    enabled: true
-    size: 1Gi
