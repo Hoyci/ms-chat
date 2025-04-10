@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hoyci/ms-chat/auth-service/keys"
 	"github.com/hoyci/ms-chat/auth-service/service/crypt"
-	"github.com/hoyci/ms-chat/auth-service/utils"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"log"
 	"net/http"

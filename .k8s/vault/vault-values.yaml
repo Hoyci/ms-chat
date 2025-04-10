@@ -1,0 +1,27 @@
+server:
+  ha:
+    enabled: true
+    replicas: 3
+  dataStorage:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 1Gi
+  standalone:
+    enabled: false
+  auditStorage:
+    enabled: false
+  extraEnvironmentVars:
+    VAULT_RAFT_NODE_ID: "vault-0"
+  affinity: {}
+  tolerations: []
+
+injector:
+  enabled: true
+
+ui:
+  enabled: true
+
+service:
+  type: ClusterIP
+  port: 8200
