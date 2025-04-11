@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export VAULT_ADDR="http://vault.vault.svc:8200"
+export VAULT_ADDR="$VAULT_ADDR"
 export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
 
 MICROSERVICES=("auth-service")

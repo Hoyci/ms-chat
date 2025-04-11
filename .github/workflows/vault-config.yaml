@@ -27,7 +27,7 @@ jobs:
       - name: Port-forward to Vault (k3s)
         run: |
           kubectl port-forward svc/vault -n vault 8200:8200 >/dev/null 2>&1 &
-          sleep 5
+          sleep 10
 
       - name: Authenticate and Configure
         env:
