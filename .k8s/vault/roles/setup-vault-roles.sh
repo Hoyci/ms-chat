@@ -7,9 +7,9 @@ MICROSERVICES=("auth-service")
 
 for SERVICE in "${MICROSERVICES[@]}"; do
   vault policy write "${SERVICE}-policy" - <<EOF
-  path "secret/data/${SERVICE}/*" {
-    capabilities = ["read", "list"]
-  }
+path "secret/data/${SERVICE}/*" {
+  capabilities = ["read", "list"]
+}
 EOF
 
   vault write auth/kubernetes/role/"${SERVICE}-role" \
