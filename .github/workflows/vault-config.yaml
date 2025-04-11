@@ -3,18 +3,28 @@ name: Configure Vault Roles
 on:
   push:
     paths:
-      - '.k8s/vault/roles/**'
+      - '.k8s/vault/**'
 
 jobs:
-  configure-roles:
+  configure-vault:
     runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Vault CLI
+        run: |
+          wget https://releases.hashicorp.com/vault/1.15.2/vault_1.15.2_linux_amd64.zip
+          unzip vault_1.15.2_linux_amd64.zip
+          sudo mv vault /usr/local/bin/
+
+      - name: Authenticate to Vault
+        run: |
+          export VAULT_ADDR="http://vault.vault.svc:8200"
+          export VAULT_TOKEN="${{ secrets.VAULT_ROOT_TOKEN }}"
+          vault status
+
       - name: Execute Role Setup Script
-        env:
-          VAULT_ROOT_TOKEN: ${{ secrets.VAULT_ROOT_TOKEN }}
         run: |
           cd .k8s/vault/roles
           chmod +x setup-vault-roles.sh
