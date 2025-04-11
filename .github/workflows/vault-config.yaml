@@ -12,22 +12,29 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Vault CLI
+      - name: Check if Vault CLI is installed
         run: |
-          whoami
-          wget -q https://releases.hashicorp.com/vault/1.15.2/vault_1.15.2_linux_amd64.zip
-          unzip vault_1.15.2_linux_amd64.zip
-          chmod +x vault
-          sudo mv vault /usr/local/bin/
+          if command -v vault >/dev/null 2>&1; then
+            echo "Vault CLI já está instalado"
+          else
+            echo "Instalando Vault CLI..."
+            wget -q https://releases.hashicorp.com/vault/1.15.2/vault_1.15.2_linux_amd64.zip
+            unzip vault_1.15.2_linux_amd64.zip
+            sudo mv vault /usr/local/bin/
+            vault version
+          fi
 
-      - name: Authenticate to Vault
+      - name: Port-forward to Vault (k3s)
         run: |
-          export VAULT_ADDR="http://vault.vault.svc:8200"
-          export VAULT_TOKEN="${{ secrets.VAULT_ROOT_TOKEN }}"
+          kubectl port-forward svc/vault -n vault 8200:8200 >/dev/null 2>&1 &
+          sleep 5
+
+      - name: Authenticate and Configure
+        env:
+          VAULT_ADDR: "http://localhost:8200"
+          VAULT_TOKEN: ${{ secrets.VAULT_ROOT_TOKEN }}
+        run: |
           vault status
-
-      - name: Execute Role Setup Script
-        run: |
           cd .k8s/vault/roles
           chmod +x setup-vault-roles.sh
           ./setup-vault-roles.sh
