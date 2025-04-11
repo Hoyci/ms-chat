@@ -8,7 +8,11 @@ MICROSERVICES=("auth-service")
 for SERVICE in "${MICROSERVICES[@]}"; do
   vault policy write "${SERVICE}-policy" - <<EOF
   path "secret/data/${SERVICE}/*" {
-    capabilities = ["read", "list"]
+    capabilities = ["create", "read", "update", "delete", "list"]
+  }
+
+  path "secret/metadata/${SERVICE}/*" {
+    capabilities = ["list"]
   }
 EOF
 
