@@ -1,0 +1,30 @@
+name: Configure Vault
+
+on:
+  push:
+    paths:
+      - '.k8s/vault/**'
+
+jobs:
+  configure-vault:
+    runs-on: self-hosted  # 👈 Usa o Runner local
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Vault CLI
+        run: |
+          wget https://releases.hashicorp.com/vault/1.15.2/vault_1.15.2_linux_amd64.zip
+          unzip vault_1.15.2_linux_amd64.zip
+          sudo mv vault /usr/local/bin/
+
+      - name: Apply Vault Policies
+        run: |
+          kubectl cp .k8s/vault/policies.hcl vault/vault-0:/tmp/policies.hcl
+          kubectl exec -n vault vault-0 -- vault policy write microservices /tmp/policies.hcl
+
+      - name: Setup Vault Roles
+        run: |
+          cd .k8s/vault/roles
+          chmod +x setup-vault-roles.sh
+          ./setup-vault-roles.sh

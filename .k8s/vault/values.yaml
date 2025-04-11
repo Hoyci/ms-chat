@@ -26,3 +26,5 @@ server:
         service_registration "kubernetes" {}
 ui:
   enabled: true
+injector:
+  enabled: true
