@@ -13,6 +13,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Execute Role Setup Script
+        env:
+          VAULT_ROOT_TOKEN: ${{ secrets.VAULT_ROOT_TOKEN }}
         run: |
           cd .k8s/vault/roles
           chmod +x setup-vault-roles.sh
