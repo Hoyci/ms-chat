@@ -4,8 +4,9 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    traefik.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
     - host: argocd.whoam.site

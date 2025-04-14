@@ -250,4 +250,8 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
                    port:
                      number: 443
       ```
-  
+4. Aplique o arquivo:
+```bash
+kubectl apply -f argocd-ingress.yaml
+```
+
