@@ -7,6 +7,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/backend-protocol: "HTTPS"
     traefik.ingress.kubernetes.io/ssl-redirect: "true"
+    traefik.ingress.kubernetes.io/server-transport: "argocd-https@kubernetescrd"
 spec:
   rules:
     - host: argocd.whoam.site

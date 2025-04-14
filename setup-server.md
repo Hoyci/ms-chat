@@ -232,14 +232,16 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-     name: argocd
+     name: argocd-ingress
      namespace: argocd
      annotations:
        kubernetes.io/ingress.class: traefik
        traefik.ingress.kubernetes.io/backend-protocol: "HTTPS"
+       traefik.ingress.kubernetes.io/ssl-redirect: "true"
+       traefik.ingress.kubernetes.io/server-transport: "argocd-https@kubernetescrd"  
    spec:
      rules:
-       - host: argocd.seudominio.com
+       - host: argocd.whoam.site
          http:
            paths:
              - path: /
