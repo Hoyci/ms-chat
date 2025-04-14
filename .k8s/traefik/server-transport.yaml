@@ -1,5 +1,5 @@
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServerTransport
+apiVersion: traefik.io/v1alpha1  # Alterado de "traefik.containo.us/v1alpha1" para "traefik.io/v1alpha1"
+kind: ServerTransport              # Mantido o mesmo nome do recurso
 metadata:
   name: argocd-https
   namespace: argocd
