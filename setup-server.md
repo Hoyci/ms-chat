@@ -218,43 +218,71 @@ kubectl get pods -A  # Verifique o Traefik (já vem pré-instalado)
 ```
 
 ## Instalando o ArgoCD:
-1. Crie um namespace para o argo:
-```bash
-kubectl create namespace argocd
-```
-2. Instale o ArgoCD:
-```bash
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-```
-3. Configureo Ingresss controler:
-   3.1 Crie um arquivo chamado `argocd-ingress.yaml` com o seguinte conteúdo:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: Ingress
-   metadata:
-     name: argocd-ingress
-     namespace: argocd
-     annotations:
-       kubernetes.io/ingress.class: traefik
-       traefik.ingress.kubernetes.io/backend-protocol: "HTTPS"
-       traefik.ingress.kubernetes.io/ssl-redirect: "true"
-       traefik.ingress.kubernetes.io/server-transport: "argocd-https@kubernetescrd"  
-   spec:
-     rules:
-       - host: argocd.whoam.site
-         http:
-           paths:
-             - path: /
-               pathType: Prefix
-               backend:
-                 service:
-                   name: argocd-server
-                   port:
-                     number: 443
-      ```
-4. Aplique o arquivo:
-```bash
-kubectl apply -f argocd-ingress.yaml
-```
-5. 
+1. Crie um arquivo de values para o argocdcd:
+```yaml
+#argocd-values.yaml
+global:
+  domain: <argocd.dominio.example>
 
+server:
+  insecure: true     
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    hosts:
+      - <argocd.dominio.example>
+    paths:
+      - path: /
+        pathType: Prefix
+        port: http
+```
+2. Crie um arquivo de ingress para o argocd:
+```yaml
+#ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    meta.helm.sh/release-name: argocd
+    meta.helm.sh/release-namespace: argocd
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  name: argocd-server
+  namespace: argocd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: <argocd.dominio.example>
+    http:
+      paths:
+      - backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - ip: 192.168.15.40
+```
+3. Instale o argo usando Helm
+```bash
+helm upgrade --install argocd argo/argo-cd \
+  --namespace argocd \
+  --create-namespace \
+  -f argocd-values.yaml
+```
+4. Verifique se o ingress foi configurado corretamente:
+```bash
+kubectl get ingress -n argocd
+```
+A saida esperada é:
+```bash
+NAME            CLASS     HOSTS               ADDRESS         PORTS   AGE
+argocd-server   traefik   <argocd.dominio.example>   192.168.15.40   80      10s
+```
