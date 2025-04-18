@@ -266,244 +266,75 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 
 3.
 
-## Instalando o Hashicorp Vault:
-
-1. Adicione o repositório oficial da Hashicorp:
-
+## Configurando os secrets:
+1. Instale o controller do Sealed Secrets
 ```bash
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
-https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-sudo tee /etc/apt/sources.list.d/hashicorp.list
-
-sudo apt update && sudo apt install vault -y
+kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.23.1/controller.yaml
 ```
 
-2. Configure o Vault com Systemd e Raft (sem TLS)
-
-   1. Crie o arquivo de configuração:
-
-   ```bash
-   sudo mkdir -p /opt/vault/data
-   sudo chown -R vault:vault /opt/vault
-   sudo tee /etc/vault.d/vault.hcl > /dev/null <<EOF
-   ui = true
-   disable_mlock = true
-
-   storage "raft" {
-      path    = "/opt/vault/data"
-      node_id = "node1"
-   }
-
-   listener "tcp" {
-      address     = "0.0.0.0:8200"
-      tls_disable = 1
-      cluster_addr = "http://<IP_SERVIDOR>:8201"
-   }
-
-   api_addr = "http://<IP_SERVIDOR>:8200"
-   cluster_addr = "http://<IP_SERVIDOR>:8201"
-   EOF
-   ```
-
-   2. Ative e inicie o Vault:
-
-   ```bash
-   sudo systemctl enable vault
-   sudo systemctl start vault
-   ```
-
-3. Inicialize e desbloqueie o Vault:
-
-   1. Exporte o vault_addr adicionado o texto abaixo no final do arquivo ~/.bashrc:
-
-   ```bash
-   nano ~/.bashrc
-   ```
-
-   Adicione o texto `export VAULT_ADDR='http://<IP-DO-SERVIDOR>:8200'` no final do arquivo
-
-   2. Inicialize e guarde unseal keys e o root token com segurança:
-
-   ```bash
-   vault operator init
-   ```
-
-   3. Desbloqueie (unseal):
-
-   ```bash
-   vault operator unseal <unseal_key_1>
-   vault operator unseal <unseal_key_2>
-   vault operator unseal <unseal_key_3>
-   ```
-
-   4. login:
-
-   ```bash
-   vault login <root_token>
-   ```
-
-4. Habilitar KV v2 em secret/
-
+2. Instale o kubeseal CLI (Linux)
 ```bash
-vault secrets enable -path=secret kv-v2
-vault secrets list
-# deve listar secret/ kv-v2
+wget https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.23.1/kubeseal-0.23.1-linux-amd64.tar.gz
+tar -xvzf kubeseal-*.tar.gz kubeseal
+sudo mv kubeseal /usr/local/bin/
 ```
 
-5. Crie uma política e role no Vault
-
-   1. Crie a política:
-
-   ```bash
-   vault policy write myapp-policy - <<EOF
-   path "secret/data/myapp/*" {
-   capabilities = ["read","create","update","delete","list"]
-   }
-   EOF
-   ```
-
-   2. Subir a policy:
-
-   ```bash
-   vault policy write myapp-policy myapp-policy.hcl
-   ```
-
-6. Configurar autenticação Kubernetes
-
-   1. Obter dados do cluster:
-
-   ```bash
-   # CA cert
-   kubectl config view --raw \
-   -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' \
-   | base64 -d > /tmp/ca.crt
-
-   # API server
-   KUBERNETES_HOST=$(kubectl config view --raw \
-   -o jsonpath='{.clusters[0].cluster.server}')
-   ```
-
-   2. Crie o ServiceAccount e faça o bind da role:
-
-   ```bash
-   kubectl create sa vault-auth -n kube-system
-
-   kubectl create clusterrolebinding vault-auth-delegator \
-   --clusterrole=system:auth-delegator \
-   --serviceaccount=kube-system:vault-auth
-   ```
-
-   3. Habilitar e configurar
-
-   ```bash
-   vault auth enable kubernetes
-
-   vault write auth/kubernetes/config \
-   token_reviewer_jwt="$(kubectl create token vault-auth -n kube-system)" \
-   kubernetes_host="$KUBERNETES_HOST" \
-   kubernetes_ca_cert=@/tmp/ca.crt
-   ```
-
-7. Criar role para injeção:
-
-```bash
-vault write auth/kubernetes/role/myapp \
-  bound_service_account_names=vault-injector \
-  bound_service_account_namespaces=default \
-  policies=myapp-policy \
-  ttl=24h
-```
-
-8. Instalar Vault Agent Injector no K3s:
-
-```bash
-helm repo add hashicorp https://helm.releases.hashicorp.com
-helm repo update
-
-helm install vault hashicorp/vault \
-  --namespace vault --create-namespace \
-  --set "injector.enabled=true" \
-  --set "server.enabled=false" \
-  --set "externalVaultAddr=http://<IP_SERVIDOR>:8200"
-```
-
-9. Preparar a ServiceAccount no Kubernetes
-
-```bash
-kubectl apply -f - <<EOF
+3. Criar o Secret Original (.k8s/secrets/secrets.yaml)
+```yaml
 apiVersion: v1
-kind: ServiceAccount
+kind: Secret
 metadata:
-  name: vault-injector
-  namespace: default
-EOF
+  name: auth-service-secrets
+  namespace: default  # Altere se usar namespaces
+type: Opaque
+data:
+  rsa_private.pem: BASE64_DO_SEU_RSA_PRIVADO  # base64 -w0 private.pem
+  rsa_public.pem: BASE64_DO_SEU_RSA_PUBLICO
+  access_jwt_secret: BASE64_DO_JWT_ACCESS
+  refresh_jwt_secret: BASE64_DO_JWT_REFRESH
 ```
 
-10. Criar e testar o segredo
-1. Grave no Vault:
+Você pode gerar os base64 usando o comando `base64 -w0 private.pem > private.pem.b64`
 
+4. Criptografar o Secret para Gerar sealed-secret.yaml
+Na pasta .k8s/secrets, rode o comando 
 ```bash
-vault kv put secret/mschat/config username="admin" password="s3cr3t"
+kubeseal --format yaml < secrets.yaml > sealed-secrets.yaml
 ```
+Esse arquivo pode ser commitado no GitHub com segurança!
 
-2.  Leia para confirmar:
-
-```bash
-vault kv get secret/mschat/config
-```
-
-11. Deploy do seu app com anotações
-
+5. Atualize o deployment da sua aplicação para puxar os secrets
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp
+  name: auth-service
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: myapp
   template:
-    metadata:
-      labels:
-        app: myapp
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "mschat"
-        vault.hashicorp.com/agent-inject-secret-config.txt: "secret/data/mschat/config"
-        vault.hashicorp.com/vault-addr: "http://192.168.15.40:8200"
     spec:
-      serviceAccountName: vault-injector
       containers:
         - name: app
-          image: busybox
-          command: ["sleep", "3600"]
-        - name: vault-agent
-          image: hashicorp/vault:1.15.4
-          volumeMounts:
-            - name: vault-config
-              mountPath: /home/vault
-            - name: vault-config-secret
-              mountPath: /vault/secret
+          image: seu-user/image:tag
           env:
-            - name: VAULT_CONFIG
-              value: /home/vault/config.json
+            - name: RSA_PRIVATE_KEY_PATH
+              value: /secrets/rsa_private.pem
+            - name: RSA_PUBLIC_KEY_PATH
+              value: /secrets/rsa_public.pem
+            - name: ACCESS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets  # Nome do Secret
+                  key: access_jwt_secret
+            - name: REFRESH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: refresh_jwt_secret
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: "/secrets"
       volumes:
-        - name: vault-config
-          emptyDir: {}
-        - name: vault-config-secret
+        - name: secrets-volume
           secret:
-            secretName: vault-agent-config
-```
-
-12. Verificar dentro do pod
-
-```bash
-kubectl exec -it deploy/myapp -- cat /vault/secrets/config.txt
-# deve mostrar:
-# username = admin
-# password = s3cr3t
+            secretName: auth-service-secrets
 ```
