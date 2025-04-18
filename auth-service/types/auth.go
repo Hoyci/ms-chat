@@ -16,9 +16,8 @@ type UserLoginPayload struct {
 }
 
 type UserLoginResponse struct {
-	User         UserResponse `json:"user"`
-	AccessToken  string       `json:"accessToken"`
-	RefreshToken string       `json:"refreshToken"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type RefreshTokenPayload struct {
@@ -26,7 +25,7 @@ type RefreshTokenPayload struct {
 }
 
 type RefreshToken struct {
-	ID        int       `db:"id"`
+	ID        string    `db:"id"`
 	UserID    string    `db:"user_id"`
 	Jti       string    `db:"jti"`
 	ExpiresAt time.Time `db:"expires_at"`

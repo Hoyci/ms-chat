@@ -7,20 +7,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hoyci/ms-chat/auth-service/keys"
-	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/hoyci/ms-chat/auth-service/keys"
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
+
 	"github.com/gorilla/mux"
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
 	"github.com/hoyci/ms-chat/auth-service/mocks"
 	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/types"
-	"github.com/hoyci/ms-chat/auth-service/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,21 +32,27 @@ func TestMain(m *testing.M) {
 
 func TestHandleUserLogin(t *testing.T) {
 	setupTestServer := func() (
-		*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router,
+		*mocks.MockUserStore,
+		*mocks.MockAuthStore,
+		*mocks.MockUUIDGenerator,
+		*mocks.MockPasswordHandler,
+		*httptest.Server,
+		*mux.Router,
 	) {
 		mockUUID := new(mocks.MockUUIDGenerator)
 		mockAuthStore := new(mocks.MockAuthStore)
 		mockUserStore := new(mocks.MockUserStore)
-		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID)
+		mockPasswordHandler := new(mocks.MockPasswordHandler)
+		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID, mockPasswordHandler)
 		apiServer := api.NewServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, nil, mockAuthHandler)
 		ts := httptest.NewServer(router)
-		return mockUserStore, mockAuthStore, mockUUID, ts, router
+		return mockUserStore, mockAuthStore, mockUUID, mockPasswordHandler, ts, router
 	}
 
 	t.Run(
 		"it should throw an error when body is not a valid JSON", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			invalidBody := bytes.NewReader([]byte("INVALID JSON"))
@@ -73,7 +79,7 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when body is a valid JSON but missing key", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			payload := types.UserLoginPayload{}
@@ -101,7 +107,7 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when body does not contain a valid email", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			payload := types.UserLoginPayload{
@@ -132,7 +138,7 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when password or confirmPassword is smaller than 8 chars", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			payload := types.UserLoginPayload{
@@ -163,7 +169,7 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when call endpoint with a non-existent user ID", func(t *testing.T) {
-			mockUserStore, _, _, ts, router := setupTestServer()
+			mockUserStore, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return(
@@ -195,7 +201,7 @@ func TestHandleUserLogin(t *testing.T) {
 	t.Run(
 		"it should return error when the request context is canceled during the process of get user by email",
 		func(t *testing.T) {
-			mockUserStore, _, _, ts, router := setupTestServer()
+			mockUserStore, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			canceledCtx, cancel := context.WithCancel(context.Background())
@@ -237,7 +243,7 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should throw a database find error", func(t *testing.T) {
-			mockUserStore, _, _, ts, router := setupTestServer()
+			mockUserStore, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return(
@@ -268,12 +274,18 @@ func TestHandleUserLogin(t *testing.T) {
 
 	t.Run(
 		"it should successfully authenticate a user", func(t *testing.T) {
-			mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
+			mockUserStore, mockAuthStore, mockUUID, passwordHandler, ts, router := setupTestServer()
 			defer ts.Close()
 
 			mockUUID.On("New").Return("mocked-uuid")
 
-			hashedPassword, _ := utils.HashPassword(context.Background(), "123mudar")
+			hashedPassword := "123mudar"
+			passwordHandler.On("HashPassword", mock.Anything, mock.Anything).Return(
+				hashedPassword, nil,
+			)
+			passwordHandler.On("CheckPassword", mock.Anything, mock.Anything, mock.Anything).Return(
+				nil,
+			)
 
 			mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return(
 				&types.GetByEmailResponse{
@@ -334,21 +346,27 @@ func TestHandleUserLogin(t *testing.T) {
 
 func TestHandleRefreshToken(t *testing.T) {
 	setupTestServer := func() (
-		*mocks.MockUserStore, *mocks.MockAuthStore, *mocks.MockUUIDGenerator, *httptest.Server, *mux.Router,
+		*mocks.MockUserStore,
+		*mocks.MockAuthStore,
+		*mocks.MockUUIDGenerator,
+		*mocks.MockPasswordHandler,
+		*httptest.Server,
+		*mux.Router,
 	) {
 		mockUUID := new(mocks.MockUUIDGenerator)
 		mockAuthStore := new(mocks.MockAuthStore)
 		mockUserStore := new(mocks.MockUserStore)
-		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID)
+		mockPasswordHandler := new(mocks.MockPasswordHandler)
+		mockAuthHandler := auth.NewAuthHandler(mockUserStore, mockAuthStore, mockUUID, mockPasswordHandler)
 		apiServer := api.NewServer(":8080", nil)
 		router := apiServer.SetupRouter(nil, nil, mockAuthHandler)
 		ts := httptest.NewServer(router)
-		return mockUserStore, mockAuthStore, mockUUID, ts, router
+		return mockUserStore, mockAuthStore, mockUUID, mockPasswordHandler, ts, router
 	}
 
 	t.Run(
 		"it should throw an error when body is not a valid JSON", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			invalidBody := bytes.NewReader([]byte("INVALID JSON"))
@@ -375,7 +393,7 @@ func TestHandleRefreshToken(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when body is a valid JSON but missing key", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			payload := types.UserLoginPayload{}
@@ -403,7 +421,7 @@ func TestHandleRefreshToken(t *testing.T) {
 
 	t.Run(
 		"it should throw an error when body does not contain a valid token", func(t *testing.T) {
-			_, _, _, ts, router := setupTestServer()
+			_, _, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			payload := types.RefreshTokenPayload{
@@ -435,7 +453,7 @@ func TestHandleRefreshToken(t *testing.T) {
 		"it should return error when the request context is canceled during the process of get refresh token by user id",
 		func(t *testing.T) {
 			token := coreUtils.GenerateTestToken("1", "JohnDoe", "johndoe@example.com", keys.PrivateKeyRefresh)
-			_, mockAuthStore, _, ts, router := setupTestServer()
+			_, mockAuthStore, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
 			canceledCtx, cancel := context.WithCancel(context.Background())
@@ -476,12 +494,18 @@ func TestHandleRefreshToken(t *testing.T) {
 
 	t.Run(
 		"it should successfully refresh user token", func(t *testing.T) {
-			mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
+			mockUserStore, mockAuthStore, mockUUID, passwordHandler, ts, router := setupTestServer()
 			defer ts.Close()
 
 			mockUUID.On("New").Return("mocked-uuid")
 
-			hashedPassword, _ := utils.HashPassword(context.Background(), "123mudar")
+			hashedPassword := "123mudar"
+			passwordHandler.On("HashPassword", mock.Anything, mock.Anything).Return(
+				hashedPassword, nil,
+			)
+			passwordHandler.On("CheckPassword", mock.Anything, mock.Anything, mock.Anything).Return(
+				nil,
+			)
 
 			mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return(
 				&types.GetByEmailResponse{
@@ -498,7 +522,7 @@ func TestHandleRefreshToken(t *testing.T) {
 
 			mockAuthStore.On("GetRefreshTokenByUserID", mock.Anything, mock.Anything).Return(
 				&types.RefreshToken{
-					ID:        1,
+					ID:        "136d8e27-c1a1-46b1-bdbf-8582944139fe",
 					UserID:    "1",
 					CreatedAt: time.Now(),
 					ExpiresAt: time.Now().Add(24 * time.Hour),
@@ -592,12 +616,18 @@ func TestHandleRefreshToken(t *testing.T) {
 
 	t.Run(
 		"it should not be able refresh user with expired token", func(t *testing.T) {
-			mockUserStore, mockAuthStore, mockUUID, ts, router := setupTestServer()
+			mockUserStore, mockAuthStore, mockUUID, passwordHandler, ts, router := setupTestServer()
 			defer ts.Close()
 
 			mockUUID.On("New").Return("mocked-uuid")
 
-			hashedPassword, _ := utils.HashPassword(context.Background(), "123mudar")
+			hashedPassword := "123mudar"
+			passwordHandler.On("HashPassword", mock.Anything, mock.Anything).Return(
+				hashedPassword, nil,
+			)
+			passwordHandler.On("CheckPassword", mock.Anything, mock.Anything, mock.Anything).Return(
+				nil,
+			)
 
 			mockUserStore.On("GetByEmail", mock.Anything, mock.Anything).Return(
 				&types.GetByEmailResponse{
@@ -614,7 +644,7 @@ func TestHandleRefreshToken(t *testing.T) {
 
 			mockAuthStore.On("GetRefreshTokenByUserID", mock.Anything, mock.Anything).Return(
 				&types.RefreshToken{
-					ID:        1,
+					ID:        "136d8e27-c1a1-46b1-bdbf-8582944139fe",
 					UserID:    "1",
 					CreatedAt: time.Now(),
 					ExpiresAt: time.Now().Add(24 * time.Hour),
@@ -674,7 +704,7 @@ func TestHandleRefreshToken(t *testing.T) {
 
 			mockAuthStore.On("GetRefreshTokenByUserID", mock.Anything, mock.Anything).Return(
 				&types.RefreshToken{
-					ID:        1,
+					ID:        "136d8e27-c1a1-46b1-bdbf-8582944139fe",
 					UserID:    "1",
 					CreatedAt: time.Now(),
 					ExpiresAt: time.Now().Add(24 * time.Hour),

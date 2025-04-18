@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/hoyci/ms-chat/auth-service/keys"
 	"github.com/hoyci/ms-chat/auth-service/service/crypt"
-	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/hoyci/ms-chat/auth-service/config"
@@ -75,6 +76,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userStore.GetByEmail(r.Context(), requestPayload.Email)
 	if err != nil {
+		fmt.Println("Error fetching user by email:", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			coreUtils.WriteError(
 				w, http.StatusNotFound, err, "HandleUserLogin",
@@ -170,14 +172,6 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	_ = coreUtils.WriteJSON(
 		w, http.StatusOK, types.UserLoginResponse{
-			User: types.UserResponse{
-				ID:        user.ID,
-				Username:  user.Username,
-				Email:     user.Email,
-				CreatedAt: user.CreatedAt,
-				UpdatedAt: user.UpdatedAt,
-				DeletedAt: user.DeletedAt,
-			},
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		},
