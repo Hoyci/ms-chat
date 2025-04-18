@@ -1,0 +1,18 @@
+global:
+  domain: argocd.whoam.site
+
+server:
+  insecure: true     
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    hosts:
+      - argocd.whoam.site
+    paths:
+      - path: /
+        pathType: Prefix
+        port: http
