@@ -36,7 +36,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: 
+                  key: private_key_refresh 
             - name: public_key_access
               valueFrom:
                 secretKeyRef:
