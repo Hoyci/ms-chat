@@ -2,8 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
-  labels:
+  labels: 
     app: auth-service
+  namespace: services
 spec:
   replicas: 1
   selector:
@@ -20,3 +21,66 @@ spec:
           ports:
             - containerPort: 8080
           imagePullPolicy: Always
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets 
+                  key: database_url
+            - name: private_key_access
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: private_key_access
+            - name: private_key_refresh
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: 
+            - name: public_key_access
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: public_key_access
+            - name: public_key_refresh
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: public_key_refresh
+            - name: access_jwt_secret
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: access_jwt_secret
+            - name: refresh_jwt_secret  
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: refresh_jwt_secret
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: PORT
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ENVIRONMENT
+            - name: ACCESS_JWT_EXPIRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ACCESS_JWT_EXPIRATION
+            - name: REFRESH_JWT_EXPIRATION  
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REFRESH_JWT_EXPIRATION
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: "/secrets"
+      volumes:
+        - name: secrets-volume
+          secret:
+            secretName: auth-service-secrets
