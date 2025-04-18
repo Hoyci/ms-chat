@@ -9,8 +9,5 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate .
-COPY --from=builder /app/cmd/migrate/migrations ./cmd/migrate/migrations
-COPY --from=builder /app/private_key_access.pem ./private_key_access.pem
-COPY --from=builder /app/private_key_refresh.pem ./private_key_refresh.pem
 EXPOSE 8080
 CMD ["./main"]
