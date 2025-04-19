@@ -42,7 +42,7 @@ func must[T any](val T, err error) T {
 	return val
 }
 
-func loadPublicKepyFromPEM(pemStr string) (*rsa.PublicKey, error) {
+func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
 	log.Println("PEM", pemStr)
 	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
