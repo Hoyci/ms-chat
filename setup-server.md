@@ -284,12 +284,10 @@ sudo mv kubeseal /usr/local/bin/
 apiVersion: v1
 kind: Secret
 metadata:
-  name: auth-service-secrets
-  namespace: default  # Altere se usar namespaces
+  name: myapp-secrets
+  namespace: services
 type: Opaque
 data:
-  rsa_private.pem: BASE64_DO_SEU_RSA_PRIVADO  # base64 -w0 private.pem
-  rsa_public.pem: BASE64_DO_SEU_RSA_PUBLICO
   access_jwt_secret: BASE64_DO_JWT_ACCESS
   refresh_jwt_secret: BASE64_DO_JWT_REFRESH
 ```
@@ -308,33 +306,92 @@ Esse arquivo pode ser commitado no GitHub com segurança!
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service
+  name: myapp
+  labels: 
+    app: myapp
+  namespace: services
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
   template:
+    metadata:
+      labels:
+        app: myapp
     spec:
       containers:
-        - name: app
-          image: seu-user/image:tag
+        - name: myapp
+          image: <your-user>/myapp:latest
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
           env:
-            - name: RSA_PRIVATE_KEY_PATH
-              value: /secrets/rsa_private.pem
-            - name: RSA_PUBLIC_KEY_PATH
-              value: /secrets/rsa_public.pem
-            - name: ACCESS_JWT_SECRET
+            - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secrets  # Nome do Secret
+                  name: myapp-secrets 
+                  key: database_url
+            - name: private_key_access
+              valueFrom:
+                secretKeyRef:
+                  name: myapp-secrets
+                  key: private_key_access
+            - name: private_key_refresh
+              valueFrom:
+                secretKeyRef:
+                  name: myapp-secrets
+                  key: private_key_refresh 
+            - name: public_key_access
+              valueFrom:
+                secretKeyRef:
+                  name: myapp-secrets
+                  key: public_key_access
+            - name: public_key_refresh
+              valueFrom:
+                secretKeyRef:
+                  name: myapp-secrets
+                  key: public_key_refresh
+            - name: access_jwt_secret
+              valueFrom:
+                secretKeyRef:
+                  name: myapp-secrets
                   key: access_jwt_secret
-            - name: REFRESH_JWT_SECRET
+            - name: refresh_jwt_secret  
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secrets
+                  name: myapp-secrets
                   key: refresh_jwt_secret
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: PORT
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ENVIRONMENT
+            - name: ACCESS_JWT_EXPIRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ACCESS_JWT_EXPIRATION
+            - name: REFRESH_JWT_EXPIRATION  
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REFRESH_JWT_EXPIRATION
           volumeMounts:
             - name: secrets-volume
               mountPath: "/secrets"
       volumes:
         - name: secrets-volume
           secret:
-            secretName: auth-service-secrets
+            secretName: myapp-secrets
+```
+
+6. Aplicar os Recursos no Cluster:
+```bash
+kubectl apply -f .k8s/secrets/sealed-secrets.yaml
 ```
