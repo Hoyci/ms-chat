@@ -31,5 +31,5 @@ dist-ssr
 *.sw?
 **/**/*.pem
 .k8s/database/secrets.yaml
-.k8s/auth-service/db/postgres-secret.yaml
+.k8s/auth-service/db/postgres-secrets.yaml
 .k8s/auth-service/secrets.yaml

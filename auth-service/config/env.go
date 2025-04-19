@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,17 +16,17 @@ import (
 )
 
 type Config struct {
-	Port                          int     `env:"PORT" envDefault:"8080"`
-	Environment                   string  `env:"ENVIRONMENT" envDefault:"development"`
-	DatabaseURL                   url.URL `env:"DATABASE_URL" envDefault:"postgres://user:password@postgres:5432/postgres?sslmode=disable"`
-	AccessJWTSecret               string  `env:"ACCESS_JWT_SECRET" envDefault:"UM_ACCESS_TOKEN_MTO_DIFICIL"`
-	AccessJWTExpirationInSeconds  int     `env:"ACCESS_JWT_EXPIRATION" envDefault:"3600"`
-	RefreshJWTSecret              string  `env:"REFRESH_JWT_SECRET" envDefault:"UM_REFRESH_TOKEN_MTO_DIFICIL"`
-	RefreshJWTExpirationInSeconds int     `env:"REFRESH_JWT_EXPIRATION" envDefault:"604800"`
-	PublicKeyAccessPEM            string  `env:"PUBLIC_KEY_ACCESS,required"`
-	PrivateKeyAccessPEM           string  `env:"PRIVATE_KEY_ACCESS,required"`
-	PublicKeyRefreshPEM           string  `env:"PUBLIC_KEY_REFRESH,required"`
-	PrivateKeyRefreshPEM          string  `env:"PRIVATE_KEY_REFRESH,required"`
+	Port                          int    `env:"PORT" envDefault:"8080"`
+	Environment                   string `env:"ENVIRONMENT" envDefault:"development"`
+	DatabaseURL                   string `env:"DATABASE_URL" envDefault:"postgres://user:password@postgres:5432/postgres?sslmode=disable"`
+	AccessJWTSecret               string `env:"ACCESS_JWT_SECRET" envDefault:"UM_ACCESS_TOKEN_MTO_DIFICIL"`
+	AccessJWTExpirationInSeconds  int    `env:"ACCESS_JWT_EXPIRATION" envDefault:"3600"`
+	RefreshJWTSecret              string `env:"REFRESH_JWT_SECRET" envDefault:"UM_REFRESH_TOKEN_MTO_DIFICIL"`
+	RefreshJWTExpirationInSeconds int    `env:"REFRESH_JWT_EXPIRATION" envDefault:"604800"`
+	PublicKeyAccessPEM            string `env:"PUBLIC_KEY_ACCESS,required"`
+	PrivateKeyAccessPEM           string `env:"PRIVATE_KEY_ACCESS,required"`
+	PublicKeyRefreshPEM           string `env:"PUBLIC_KEY_REFRESH,required"`
+	PrivateKeyRefreshPEM          string `env:"PRIVATE_KEY_REFRESH,required"`
 
 	PublicKeyAccess   *rsa.PublicKey
 	PrivateKeyAccess  *rsa.PrivateKey
