@@ -8,14 +8,16 @@ spec:
   source:
     repoURL: "https://charts.bitnami.com/bitnami"
     chart: postgresql
-    targetRevision: 10.5.0
+    targetRevision: 16.6.3
     helm:
       values: |
         persistence:
           enabled: true
           size: 512Mi
         auth:
-          postgresPassword: "sua-senha-aqui"
+          existingSecret: postgresql-auth
+          secretKeys:
+            adminPasswordKey: postgres-password
   destination:
     server: "https://kubernetes.default.svc"
     namespace: databases
