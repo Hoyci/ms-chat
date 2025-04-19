@@ -15,6 +15,17 @@ spec:
       labels:
         app: auth-service
     spec:
+      initContainers:
+        - name: run-migrations
+          image: hoyci98/auth-service:latest
+          command: ["make", "migrate-up"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: AUTH_DB_URL
+          imagePullPolicy: Always
       containers:
         - name: auth-service
           image: hoyci98/auth-service:latest

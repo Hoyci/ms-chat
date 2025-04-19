@@ -395,3 +395,9 @@ spec:
 ```bash
 kubectl apply -f .k8s/secrets/sealed-secrets.yaml
 ```
+
+
+
+Acessando o banco auth
+ssh -L 5432:localhost:5432 ruan-homelab@192.168.15.40
+kubectl port-forward <nome-do-pod> -n databases 5432:5432
