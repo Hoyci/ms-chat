@@ -42,7 +42,8 @@ func must[T any](val T, err error) T {
 	return val
 }
 
-func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
+func loadPublicKepyFromPEM(pemStr string) (*rsa.PublicKey, error) {
+	log.Println("PEM", pemStr)
 	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
 		decoded = []byte(pemStr)
@@ -65,6 +66,7 @@ func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
 }
 
 func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
+	log.Println("PEM", pemStr)
 	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
 		decoded = []byte(pemStr)
