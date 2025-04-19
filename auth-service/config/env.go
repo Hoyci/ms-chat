@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/caarlos0/env"
 	"github.com/joho/godotenv"
@@ -43,13 +44,9 @@ func must[T any](val T, err error) T {
 }
 
 func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
+	pemStr = strings.ReplaceAll(pemStr, "\\n", "\n")
 	log.Println("PEM", pemStr)
-	decoded, err := base64.StdEncoding.DecodeString(pemStr)
-	if err != nil {
-		decoded = []byte(pemStr)
-	}
-
-	block, _ := pem.Decode(decoded)
+	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil || block.Type != "PUBLIC KEY" {
 		return nil, fmt.Errorf("invalid PEM block, expected PUBLIC KEY")
 	}
@@ -58,14 +55,17 @@ func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse public key: %w", err)
 	}
+
 	rsaPub, ok := pub.(*rsa.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("decoded key is not *rsa.PublicKey")
 	}
+
 	return rsaPub, nil
 }
 
 func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
+	pemStr = strings.ReplaceAll(pemStr, "\\n", "\n")
 	log.Println("PEM", pemStr)
 	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
