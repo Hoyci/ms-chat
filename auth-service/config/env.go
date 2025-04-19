@@ -45,7 +45,6 @@ func must[T any](val T, err error) T {
 
 func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
 	pemStr = strings.ReplaceAll(pemStr, "\\n", "\n")
-	log.Println("PEM", pemStr)
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil || block.Type != "PUBLIC KEY" {
 		return nil, fmt.Errorf("invalid PEM block, expected PUBLIC KEY")
@@ -66,7 +65,6 @@ func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
 
 func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
 	pemStr = strings.ReplaceAll(pemStr, "\\n", "\n")
-	log.Println("PEM", pemStr)
 	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
 		decoded = []byte(pemStr)
