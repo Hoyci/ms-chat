@@ -26,37 +26,37 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets 
-                  key: database_url
-            - name: private_key_access
+                  key: DATABASE_URL
+            - name: PRIVATE_KEY_ACCESS
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: private_key_access
-            - name: private_key_refresh
+                  key: PRIVATE_KEY_ACCESS
+            - name: PRIVATE_KEY_REFRESH
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: private_key_refresh 
-            - name: public_key_access
+                  key: PRIVATE_KEY_REFRESH 
+            - name: PUBLIC_KEY_ACCESS
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: public_key_access
-            - name: public_key_refresh
+                  key: PUBLIC_KEY_ACCESS
+            - name: PUBLIC_KEY_REFRESH
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: public_key_refresh
-            - name: access_jwt_secret
+                  key: PUBLIC_KEY_REFRESH
+            - name: ACCESS_JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: access_jwt_secret
-            - name: refresh_jwt_secret  
+                  key: ACCESS_JWT_SECRET
+            - name: REFRESH_JWT_SECRET  
               valueFrom:
                 secretKeyRef:
                   name: auth-service-secrets
-                  key: refresh_jwt_secret
+                  key: REFRESH_JWT_SECRET
             - name: PORT
               valueFrom:
                 configMapKeyRef:
