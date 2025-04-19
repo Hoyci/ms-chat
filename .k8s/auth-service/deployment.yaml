@@ -18,7 +18,7 @@ spec:
       initContainers:
         - name: run-migrations
           image: hoyci98/auth-service:latest
-          command: ["make", "migrate-up"]
+          command: ["/app/migrate", "up"]
           env:
             - name: DATABASE_URL
               valueFrom:
