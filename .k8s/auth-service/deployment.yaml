@@ -77,10 +77,3 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: REFRESH_JWT_EXPIRATION
-          volumeMounts:
-            - name: secrets-volume
-              mountPath: "/secrets"
-      volumes:
-        - name: secrets-volume
-          secret:
-            secretName: auth-service-secrets
