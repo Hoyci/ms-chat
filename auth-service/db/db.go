@@ -9,7 +9,7 @@ import (
 )
 
 func NewPGStorage() *sql.DB {
-	db, err := sql.Open("postgres", config.Envs.DatabaseURL)
+	db, err := sql.Open("postgres", config.Envs.DatabaseURL.String())
 	if err != nil {
 		log.Fatalf("Failed to start connection")
 	}

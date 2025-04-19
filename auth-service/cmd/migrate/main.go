@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("postgres", config.Envs.DatabaseURL)
+	db, err := sql.Open("postgres", config.Envs.DatabaseURL.String())
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
