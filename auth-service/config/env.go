@@ -3,6 +3,7 @@ package config
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -41,46 +42,48 @@ func must[T any](val T, err error) T {
 	return val
 }
 
-func parsePEMGeneric[T any](
-	pemStr string,
-	expectedType string,
-	parser func([]byte) (T, error),
-) (T, error) {
-	block, _ := pem.Decode([]byte(pemStr))
-	if block == nil || block.Type != expectedType {
-		return *new(T),
-			fmt.Errorf("invalid PEM block, expected %s", expectedType)
-	}
-	return parser(block.Bytes)
-}
-
 func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
-	ifi, err := parsePEMGeneric(pemStr, "PUBLIC KEY", x509.ParsePKIXPublicKey)
+	decoded, err := base64.StdEncoding.DecodeString(pemStr)
 	if err != nil {
-		return nil, err
+		decoded = []byte(pemStr)
 	}
-	pub, ok := ifi.(*rsa.PublicKey)
+
+	block, _ := pem.Decode(decoded)
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, fmt.Errorf("invalid PEM block, expected PUBLIC KEY")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse public key: %w", err)
+	}
+	rsaPub, ok := pub.(*rsa.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("decoded key is not *rsa.PublicKey")
 	}
-	return pub, nil
+	return rsaPub, nil
 }
 
 func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(pemStr))
+	decoded, err := base64.StdEncoding.DecodeString(pemStr)
+	if err != nil {
+		decoded = []byte(pemStr)
+	}
+
+	block, _ := pem.Decode(decoded)
 	if block == nil {
 		return nil, fmt.Errorf("invalid PEM: no block found")
 	}
 
-	keyIfc, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse PKCS#8 private key: %w", err)
 	}
-	key, ok := keyIfc.(*rsa.PrivateKey)
+	rsaKey, ok := key.(*rsa.PrivateKey)
 	if !ok {
 		return nil, fmt.Errorf("parsed PKCS#8 key is not RSA")
 	}
-	return key, nil
+	return rsaKey, nil
 }
 
 func findEnv() (string, error) {
