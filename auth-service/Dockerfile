@@ -9,5 +9,6 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate .
+COPY --from=builder /app/cmd/migrate/migrations ./migrations
 EXPOSE 8080
 CMD ["./main"]
