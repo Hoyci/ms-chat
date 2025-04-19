@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hoyci/ms-chat/auth-service/keys"
 	"github.com/hoyci/ms-chat/auth-service/service/crypt"
 
 	"github.com/go-playground/validator/v10"
@@ -51,7 +50,7 @@ func NewAuthHandler(
 // @Failure 400 {object} coreTypes.BadRequestStructResponse "Validation errors for payload"
 // @Failure 404 {object} coreTypes.NotFoundResponse "No user found with the given email"
 // @Failure 500 {object} coreTypes.InternalServerErrorResponse "An unexpected error occurred"
-// @Router /auth/login [post]
+// @Router /auth [post]
 func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	var requestPayload types.UserLoginPayload
 	if err := coreUtils.ParseJSON(r, &requestPayload); err != nil {
@@ -106,9 +105,11 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
+	fmt.Println("configEnvs", config.Envs)
+
 	accessToken, err := coreUtils.CreateJWT(
 		user.ID, user.Username, user.Email, config.Envs.AccessJWTSecret,
-		int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, keys.PrivateKeyAccess,
+		int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, config.Envs.PrivateKeyAccess,
 	)
 	if err != nil {
 		coreUtils.WriteError(
@@ -117,7 +118,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	_, err = coreUtils.VerifyJWT(accessToken, keys.PublicKeyAccess)
+	_, err = coreUtils.VerifyJWT(accessToken, config.Envs.PublicKeyAccess)
 	if err != nil {
 		coreUtils.WriteError(
 			w, http.StatusInternalServerError, err, "HandleUserLogin",
@@ -128,7 +129,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken, err := coreUtils.CreateJWT(
 		user.ID, user.Username, user.Email, config.Envs.RefreshJWTSecret,
-		int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, keys.PrivateKeyRefresh,
+		int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, config.Envs.PrivateKeyRefresh,
 	)
 	if err != nil {
 		coreUtils.WriteError(
@@ -137,7 +138,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	refreshTokenClaims, err := coreUtils.VerifyJWT(refreshToken, keys.PublicKeyRefresh)
+	refreshTokenClaims, err := coreUtils.VerifyJWT(refreshToken, config.Envs.PublicKeyRefresh)
 	if err != nil {
 		coreUtils.WriteError(
 			w, http.StatusInternalServerError, err, "HandleUserLogin",
@@ -213,7 +214,7 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	claims, err := coreUtils.VerifyJWT(requestPayload.RefreshToken, keys.PublicKeyRefresh)
+	claims, err := coreUtils.VerifyJWT(requestPayload.RefreshToken, config.Envs.PublicKeyRefresh)
 	if err != nil {
 		coreUtils.WriteError(
 			w, http.StatusUnauthorized, err, "HandleRefreshToken",
@@ -255,7 +256,7 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 
 	newAccessToken, err := coreUtils.CreateJWT(
 		claims.UserID, claims.Username, claims.Email, config.Envs.AccessJWTSecret,
-		int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, keys.PrivateKeyAccess,
+		int64(config.Envs.AccessJWTExpirationInSeconds), h.UUIDGen, config.Envs.PrivateKeyAccess,
 	)
 	if err != nil {
 		coreUtils.WriteError(
@@ -266,7 +267,7 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 
 	newRefreshToken, err := coreUtils.CreateJWT(
 		claims.UserID, claims.Username, claims.Email, config.Envs.RefreshJWTSecret,
-		int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, keys.PrivateKeyRefresh,
+		int64(config.Envs.RefreshJWTExpirationInSeconds), h.UUIDGen, config.Envs.PrivateKeyRefresh,
 	)
 	if err != nil {
 		coreUtils.WriteError(
@@ -275,7 +276,7 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 		)
 	}
 
-	newRefreshTokenClaims, err := coreUtils.VerifyJWT(newRefreshToken, keys.PublicKeyRefresh)
+	newRefreshTokenClaims, err := coreUtils.VerifyJWT(newRefreshToken, config.Envs.PublicKeyRefresh)
 	if err != nil {
 		coreUtils.WriteError(
 			w, http.StatusInternalServerError, err, "HandleUserLogin",

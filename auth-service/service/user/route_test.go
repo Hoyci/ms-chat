@@ -6,14 +6,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/hoyci/ms-chat/auth-service/keys"
-	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 
 	"github.com/gorilla/mux"
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
@@ -26,7 +26,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	keys.LoadTestKeys()
 	m.Run()
 }
 
@@ -35,12 +34,12 @@ func setupAuthenticatedRequest(t *testing.T, method, url, payload, userID string
 ) {
 	var token string
 	if shouldAddUserID {
-		token = coreUtils.GenerateTestToken(userID, "JohnDoe", "johndoe@example.com", keys.TestPrivateKey)
+		token = coreUtils.GenerateTestToken(userID, "JohnDoe", "johndoe@example.com", config.Envs.PrivateKeyAccess)
 	} else {
-		token = coreUtils.GenerateTestToken("", "JohnDoe", "johndoe@example.com", keys.TestPrivateKey)
+		token = coreUtils.GenerateTestToken("", "JohnDoe", "johndoe@example.com", config.Envs.PrivateKeyAccess)
 	}
 
-	claims, err := coreUtils.VerifyJWT(token, keys.TestPublicKey)
+	claims, err := coreUtils.VerifyJWT(token, config.Envs.PublicKeyAccess)
 	if err != nil {
 		t.Fatalf("Failed to verify token: %v", err)
 	}

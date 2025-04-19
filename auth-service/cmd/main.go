@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/hoyci/ms-chat/auth-service/keys"
-	"github.com/hoyci/ms-chat/auth-service/service/crypt"
-	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"log"
 	"net/http"
+
+	"github.com/hoyci/ms-chat/auth-service/service/crypt"
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
 	"github.com/hoyci/ms-chat/auth-service/config"
@@ -25,7 +25,6 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	keys.LoadRunKeys()
 	pgStorage := db.NewPGStorage()
 	path := fmt.Sprintf("0.0.0.0:%d", config.Envs.Port)
 

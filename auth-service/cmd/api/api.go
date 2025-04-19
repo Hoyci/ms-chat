@@ -2,9 +2,9 @@ package api
 
 import (
 	"database/sql"
-	"github.com/hoyci/ms-chat/auth-service/keys"
-	coreUtils "github.com/hoyci/ms-chat/core/utils"
 	"net/http"
+
+	coreUtils "github.com/hoyci/ms-chat/core/utils"
 
 	"github.com/gorilla/mux"
 	"github.com/hoyci/ms-chat/auth-service/config"
@@ -62,15 +62,15 @@ func (s *Server) SetupRouter(
 
 	subrouter.HandleFunc("/users", userHandler.HandleCreateUser).Methods(http.MethodPost)
 	subrouter.Handle(
-		"/users", coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleGetUserByID), keys.PublicKeyAccess),
+		"/users", coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleGetUserByID), config.Envs.PublicKeyAccess),
 	).Methods(http.MethodGet)
 	subrouter.Handle(
 		"/users",
-		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleUpdateUserByID), keys.PublicKeyAccess),
+		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleUpdateUserByID), config.Envs.PublicKeyAccess),
 	).Methods(http.MethodPut)
 	subrouter.Handle(
 		"/users",
-		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleDeleteUserByID), keys.PublicKeyAccess),
+		coreMiddlewares.AuthMiddleware(http.HandlerFunc(userHandler.HandleDeleteUserByID), config.Envs.PublicKeyAccess),
 	).Methods(http.MethodDelete)
 
 	s.Router = router

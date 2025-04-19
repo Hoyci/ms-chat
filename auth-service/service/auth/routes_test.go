@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hoyci/ms-chat/auth-service/keys"
 	coreUtils "github.com/hoyci/ms-chat/core/utils"
 
 	"github.com/gorilla/mux"
 	"github.com/hoyci/ms-chat/auth-service/cmd/api"
+	"github.com/hoyci/ms-chat/auth-service/config"
 	"github.com/hoyci/ms-chat/auth-service/mocks"
 	"github.com/hoyci/ms-chat/auth-service/service/auth"
 	"github.com/hoyci/ms-chat/auth-service/types"
@@ -26,7 +26,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	keys.LoadTestKeys()
 	m.Run()
 }
 
@@ -329,14 +328,14 @@ func TestHandleUserLogin(t *testing.T) {
 				t.Fatalf("Failed to unmarshal response body: %v", err)
 			}
 
-			accessTokenClaims, err := coreUtils.VerifyJWT(responseMap.AccessToken, keys.PublicKeyAccess)
+			accessTokenClaims, err := coreUtils.VerifyJWT(responseMap.AccessToken, config.Envs.PublicKeyAccess)
 			assert.NoError(t, err, "Failed to verify JWT token")
 
 			assert.Equal(t, "johndoe@email.com", accessTokenClaims.Email, "Email claim mismatch")
 			assert.Equal(t, "JohnDoe", accessTokenClaims.Username, "Username claim mismatch")
 			assert.Equal(t, "1", accessTokenClaims.UserID, "UserID claim mismatch")
 
-			refreshTokenClaims, err := coreUtils.VerifyJWT(responseMap.RefreshToken, keys.PublicKeyRefresh)
+			refreshTokenClaims, err := coreUtils.VerifyJWT(responseMap.RefreshToken, config.Envs.PublicKeyRefresh)
 			assert.NoError(t, err, "Failed to verify JWT token")
 
 			assert.Equal(t, "1", refreshTokenClaims.UserID, "UserID claim mismatch")
@@ -452,7 +451,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	t.Run(
 		"it should return error when the request context is canceled during the process of get refresh token by user id",
 		func(t *testing.T) {
-			token := coreUtils.GenerateTestToken("1", "JohnDoe", "johndoe@example.com", keys.PrivateKeyRefresh)
+			token := coreUtils.GenerateTestToken("1", "JohnDoe", "johndoe@example.com", config.Envs.PrivateKeyRefresh)
 			_, mockAuthStore, _, _, ts, router := setupTestServer()
 			defer ts.Close()
 
@@ -601,14 +600,14 @@ func TestHandleRefreshToken(t *testing.T) {
 				t.Fatalf("refresh_token not found or not a string")
 			}
 
-			accessTokenClaims, err := coreUtils.VerifyJWT(accessToken, keys.PublicKeyAccess)
+			accessTokenClaims, err := coreUtils.VerifyJWT(accessToken, config.Envs.PublicKeyAccess)
 			assert.NoError(t, err, "Failed to verify JWT token")
 
 			assert.Equal(t, "johndoe@email.com", accessTokenClaims.Email, "Email claim mismatch")
 			assert.Equal(t, "JohnDoe", accessTokenClaims.Username, "Username claim mismatch")
 			assert.Equal(t, "1", accessTokenClaims.UserID, "UserID claim mismatch")
 
-			refreshTokenClaims, err := coreUtils.VerifyJWT(refreshToken, keys.PublicKeyRefresh)
+			refreshTokenClaims, err := coreUtils.VerifyJWT(refreshToken, config.Envs.PublicKeyRefresh)
 			assert.NoError(t, err, "Failed to verify JWT token")
 			assert.Equal(t, "1", refreshTokenClaims.UserID, "UserID claim mismatch")
 		},
