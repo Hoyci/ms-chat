@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://charts.bitnami.com/bitnami"
+    chart: postgresql
+    targetRevision: 10.5.0
+    helm:
+      values: |
+        persistence:
+          enabled: true
+          size: 512Mi
+        auth:
+          postgresPassword: "sua-senha-aqui"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: databases
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
