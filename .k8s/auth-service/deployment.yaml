@@ -25,6 +25,56 @@ spec:
                 secretKeyRef:
                   name: database-secrets
                   key: AUTH_DB_URL
+            - name: PRIVATE_KEY_ACCESS
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: PRIVATE_KEY_ACCESS
+            - name: PRIVATE_KEY_REFRESH
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: PRIVATE_KEY_REFRESH 
+            - name: PUBLIC_KEY_ACCESS
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: PUBLIC_KEY_ACCESS
+            - name: PUBLIC_KEY_REFRESH
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: PUBLIC_KEY_REFRESH
+            - name: ACCESS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: ACCESS_JWT_SECRET
+            - name: REFRESH_JWT_SECRET  
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secrets
+                  key: REFRESH_JWT_SECRET
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: PORT
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ENVIRONMENT
+            - name: ACCESS_JWT_EXPIRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ACCESS_JWT_EXPIRATION
+            - name: REFRESH_JWT_EXPIRATION  
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REFRESH_JWT_EXPIRATION
           imagePullPolicy: Always
       containers:
         - name: auth-service
